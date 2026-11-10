@@ -26,23 +26,23 @@ export default async function PanelAdministrador() {
   const cuenta = (rol: string) => (perfiles ?? []).filter((p) => p.rol === rol).length;
 
   return (
-    <main className="contenedor">
+    <>
       <Navegacion activa="/admin" />
+      <main className="contenedor pagina">
 
-      <section className="bloque-destacado pila" style={{ gap: 8 }}>
-        <span className="texto-tenue">Administración</span>
-        <h1 className="titular" style={{ fontSize: 40 }}>Supervisión de Remate</h1>
-        <p className="texto-tenue">Revisa cuentas, roles y subastas. Los cambios de rol quedan protegidos por la base de datos: solo un administrador puede hacerlos.</p>
-      </section>
+      <div className="pila" style={{ gap: 6 }}>
+          <h1 className="titulo-pagina">Administración</h1>
+          <p className="texto-guia">Cuentas, roles y subastas de Remate. Solo un administrador puede cambiar roles; la base de datos lo impide a cualquier otra cuenta.</p>
+        </div>
 
-      <section className="grilla-3" style={{ margin: "22px 0" }} aria-label="Resumen">
-        <div className="tarjeta"><p className="texto-tenue">Compradores</p><p className="monto-grande cifra">{cuenta("comprador")}</p></div>
-        <div className="tarjeta"><p className="texto-tenue">Vendedores</p><p className="monto-grande cifra">{cuenta("vendedor")}</p></div>
-        <div className="tarjeta"><p className="texto-tenue">Solicitudes de puja rechazadas</p><p className="monto-grande cifra">{rechazadas ?? 0}</p></div>
-      </section>
+      <section className="metricas" aria-label="Resumen">
+          <div className="metrica"><span className="texto-chico">Compradores</span><p className="valor">{cuenta("comprador")}</p></div>
+          <div className="metrica"><span className="texto-chico">Vendedores</span><p className="valor">{cuenta("vendedor")}</p></div>
+          <div className="metrica"><span className="texto-chico">Pujas rechazadas</span><p className="valor">{rechazadas ?? 0}</p></div>
+        </section>
 
-      <section className="tarjeta" style={{ marginBottom: 24 }}>
-        <h2 className="titulo-seccion" style={{ fontSize: 22, marginBottom: 16 }}>Cuentas y roles</h2>
+      <section className="panel pila" style={{ gap: 16 }}>
+        <h2 className="titulo-seccion" >Cuentas y roles</h2>
         <table className="tabla">
           <thead><tr><th>Nombre visible</th><th>Tienda</th><th>Registro</th><th>Rol</th></tr></thead>
           <tbody>
@@ -58,8 +58,8 @@ export default async function PanelAdministrador() {
         </table>
       </section>
 
-      <section className="tarjeta" style={{ marginBottom: 24 }}>
-        <h2 className="titulo-seccion" style={{ fontSize: 22, marginBottom: 16 }}>Subastas</h2>
+      <section className="panel pila" style={{ gap: 16 }}>
+        <h2 className="titulo-seccion" >Subastas</h2>
         {subastas.length === 0 ? <p className="texto-tenue">Todavía no hay subastas.</p> : (
           <table className="tabla">
             <thead><tr><th>Producto</th><th>Tienda</th><th>Estado</th><th>Sala</th><th>Oferta vigente</th><th>Pujas</th><th>Ganador</th></tr></thead>
@@ -79,6 +79,7 @@ export default async function PanelAdministrador() {
           </table>
         )}
       </section>
-    </main>
+      </main>
+    </>
   );
 }

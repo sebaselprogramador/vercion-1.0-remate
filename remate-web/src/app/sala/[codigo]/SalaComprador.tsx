@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Ilustracion, ilustracionDeCategoria } from "@/components/Ilustracion";
-import { EstadoChip } from "@/components/EstadoChip";
-import { bs, hace, reloj, sumarMontos } from "@/lib/formato";
+import { Tablero } from "@/components/Tablero";
+import { Historial } from "@/components/Historial";
+import { bs, sumarMontos } from "@/lib/formato";
 import type { EstadoSala } from "@/lib/salas";
 import { useSala, useSegundosRestantes } from "@/lib/useSala";
 
@@ -15,12 +16,11 @@ type MiOferta =
   | { fase: "rechazada"; id: string; monto: string; mensaje: string }
   | { fase: "sin_confirmar"; id: string; monto: string };
 
-const textoConexion = {
-  conectando: "Conectando…",
-  conectado: "Conectado",
-  reconectando: "Reconectando…",
-  sin_servidor: "Servidor de subastas no disponible",
-} as const;
+/** Acepta montos con hasta dos decimales y mayores que cero. */
+function montoValido(t: string) {
+  const l = t.trim().replace(",", ".");
+  return /^\d{1,10}(\.\d{1,2})?$/.test(l) && Number(l) > 0 ? l : null;
+}
 
 export function SalaComprador({ inicial, conSesion, esVendedorDeLaSala }: {
   inicial: EstadoSala; conSesion: boolean; esVendedorDeLaSala: boolean;
@@ -30,6 +30,7 @@ export function SalaComprador({ inicial, conSesion, esVendedorDeLaSala }: {
   const [mia, setMia] = useState<MiOferta | null>(null);
 
   const minimo = s.oferta_vigente != null ? sumarMontos(s.oferta_vigente, s.incremento_minimo) : s.precio_inicial;
+  const opciones = [minimo, sumarMontos(minimo, s.incremento_minimo), sumarMontos(minimo, sumarMontos(s.incremento_minimo, s.incremento_minimo))];
   const [monto, setMonto] = useState(minimo);
   useEffect(() => setMonto(minimo), [minimo]);
 
@@ -53,111 +54,111 @@ export function SalaComprador({ inicial, conSesion, esVendedorDeLaSala }: {
     }
     socket.timeout(8000).emit("pujar", { codigo: s.codigo_sala, idSolicitud: id, monto: valor },
       (err: unknown, r: { ok: boolean; resultado?: string; mensaje?: string; error?: string }) => {
-        if (err || !r || (!r.ok && r.error === "resultado_no_confirmado")) {
-          setMia({ fase: "sin_confirmar", id, monto: valor });
-        } else if (r.ok && r.resultado === "aceptada") {
-          setMia({ fase: "aceptada", id, monto: valor, mensaje: r.mensaje ?? "Tu oferta quedó registrada." });
-        } else {
-          setMia({ fase: "rechazada", id, monto: valor, mensaje: r.mensaje ?? traducirError(r.error) });
-        }
+        if (err || !r || (!r.ok && r.error === "resultado_no_confirmado")) setMia({ fase: "sin_confirmar", id, monto: valor });
+        else if (r.ok && r.resultado === "aceptada") setMia({ fase: "aceptada", id, monto: valor, mensaje: r.mensaje ?? "Tu oferta quedó registrada." });
+        else setMia({ fase: "rechazada", id, monto: valor, mensaje: r.mensaje ?? traducirError(r.error) });
       });
   }
 
-  const abierta = s.estado === "abierta" && restante > 0;
+  const valido = montoValido(monto);
+  const bajoMinimo = valido != null && Number(valido) < Number(minimo);
+  const abierta = s.estado === "abierta" && (restante == null || restante > 0);
   const puedeOfertar = abierta && conSesion && !esVendedorDeLaSala && conexion === "conectado" && mia?.fase !== "enviando";
 
   return (
-    <main className="marco-movil pila" style={{ gap: 16 }}>
-      <header className="fila entre">
-        <Link href="/" className="marca" style={{ fontSize: 28 }}>remate.</Link>
-        <span className="texto-chico codigo">Sala {s.codigo_sala}</span>
-      </header>
-      <div className="fila entre">
-        <EstadoChip estado={s.estado} />
-        <span className="texto-chico" role="status">{textoConexion[conexion]}</span>
+    <main className="contenedor pagina">
+      <div className="sala">
+        <div className="sala-columna sala-tablero">
+          <Tablero s={s} restante={restante} conexion={conexion} />
+
+          {mia && <EstadoMiOferta mia={mia} onReintentar={() => enviar(mia.id, mia.monto)} />}
+
+          {s.estado === "abierta" && (
+            <section className="panel pila" style={{ gap: 14 }} aria-label="Hacer una oferta">
+              {!conSesion ? (
+                <>
+                  <p className="texto-guia">Ingresa con tu cuenta para ofertar. Tu nombre visible aparecerá en el historial de la sala.</p>
+                  <Link className="boton boton-grande boton-bloque" href={`/ingresar?volver=/sala/${s.codigo_sala}`}>Ingresar para ofertar</Link>
+                </>
+              ) : esVendedorDeLaSala ? (
+                <p className="aviso aviso-neutro">Esta es tu subasta. Puedes seguirla aquí, pero no pujar en ella.</p>
+              ) : (
+                <>
+                  <div className="fila entre">
+                    <span style={{ fontWeight: 600 }}>Tu oferta</span>
+                    <span className="texto-chico">Mínimo {bs(minimo)}</span>
+                  </div>
+                  <div className="pujas-rapidas" role="group" aria-label="Montos sugeridos">
+                    {opciones.map((o) => (
+                      <button key={o} type="button" className="puja-rapida" aria-pressed={monto === o}
+                        disabled={!puedeOfertar} onClick={() => setMonto(o)}>{bs(o)}</button>
+                    ))}
+                  </div>
+                  <div className="campo">
+                    <label htmlFor="monto" className="texto-chico" style={{ fontWeight: 500 }}>Otro monto</label>
+                    <div className="entrada-moneda">
+                      <input id="monto" className="entrada" inputMode="decimal" value={monto} disabled={!puedeOfertar}
+                        onChange={(e) => setMonto(e.target.value)} aria-invalid={!valido || bajoMinimo} />
+                    </div>
+                    {bajoMinimo && <span className="error">La oferta debe ser de al menos {bs(minimo)}.</span>}
+                  </div>
+                  <button className="boton boton-grande boton-bloque" disabled={!puedeOfertar || !valido || bajoMinimo}
+                    onClick={() => valido && enviar(crypto.randomUUID(), valido)}>
+                    {mia?.fase === "enviando" ? "Enviando…" : `Ofertar ${valido ? bs(valido) : ""}`}
+                  </button>
+                  {conexion === "sin_servidor" && (
+                    <p className="aviso aviso-error">No hay conexión con la sala. Revisa tu internet; cuando vuelva, la sala se actualizará sola.</p>
+                  )}
+                </>
+              )}
+            </section>
+          )}
+          {s.estado === "programada" && (
+            <p className="aviso aviso-neutro">Esta subasta todavía no abre. Cuando el vendedor la inicie en su live, podrás ofertar aquí sin recargar la página.</p>
+          )}
+        </div>
+
+        <div className="sala-columna">
+          <div className="fila" style={{ gap: 18, alignItems: "flex-start" }}>
+            <div style={{ width: 120, flexShrink: 0 }}><Ilustracion tipo={ilustracionDeCategoria(s.categoria)} alto={120} /></div>
+            <div className="pila" style={{ gap: 6 }}>
+              <h1 className="titulo-pagina">{s.producto}</h1>
+              <p className="texto-tenue">{s.tienda}, {s.ciudad}{s.categoria ? `. ${s.categoria}` : ""}</p>
+            </div>
+          </div>
+          {s.descripcion && <p className="texto-guia">{s.descripcion}</p>}
+
+          <section className="panel pila" style={{ gap: 4 }}>
+            <h2 className="titulo-seccion" style={{ fontSize: 17, marginBottom: 6 }}>Historial de pujas</h2>
+            <Historial pujas={s.ultimas_pujas} />
+          </section>
+
+          <section className="pila" style={{ gap: 8 }}>
+            <h2 className="titulo-seccion" style={{ fontSize: 17 }}>Cómo funciona esta sala</h2>
+            <ul className="texto-tenue" style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 6 }}>
+              <li>Solo cuentan las pujas aceptadas aquí, no los comentarios del live.</li>
+              <li>Cada oferta debe superar la actual al menos por {bs(s.incremento_minimo)}.</li>
+              <li>Gana la oferta más alta registrada cuando termina el tiempo.</li>
+              <li>El pago y la entrega se coordinan con el vendedor, fuera de Remate.</li>
+            </ul>
+          </section>
+        </div>
       </div>
-
-      <Ilustracion tipo={ilustracionDeCategoria(s.categoria)} alto={200} />
-      <div className="pila" style={{ gap: 4 }}>
-        <h1 className="titulo-tarjeta" style={{ fontSize: 26 }}>{s.producto}</h1>
-        <span className="texto-tenue">{s.tienda} · {s.ciudad}</span>
-      </div>
-
-      {s.estado === "cerrada" ? (
-        <section className="bloque-destacado pila" style={{ gap: 6 }}>
-          <p className="texto-tenue">Subasta cerrada</p>
-          {s.ganador
-            ? <><p className="titulo-tarjeta">Ganó {s.ganador}</p><p className="monto-grande cifra">{bs(s.monto_ganador)}</p></>
-            : <p className="titulo-tarjeta">Terminó sin ofertas válidas.</p>}
-        </section>
-      ) : (
-        <section className="tarjeta fila entre">
-          <div>
-            <p className="texto-chico">{s.oferta_vigente != null ? "Oferta actual" : "Precio inicial"}</p>
-            <p className="monto-grande cifra">{bs(s.oferta_vigente ?? s.precio_inicial)}</p>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <p className="texto-chico">{s.estado === "abierta" ? "Cierra en" : "Duración"}</p>
-            <p className="cifra" style={{ fontSize: 30, fontWeight: 700 }}>
-              {s.estado === "abierta" ? reloj(restante) : reloj(s.duracion_seg)}
-            </p>
-          </div>
-        </section>
-      )}
-
-      {mia && <EstadoMiOferta mia={mia} onReintentar={() => enviar(mia.id, mia.monto)} />}
-
-      <section className="pila" style={{ gap: 10 }}>
-        <h2 className="titulo-tarjeta" style={{ fontSize: 16 }}>Últimas pujas</h2>
-        {s.ultimas_pujas.length === 0
-          ? <p className="texto-tenue">Todavía no hay pujas.</p>
-          : s.ultimas_pujas.slice(0, 5).map((p) => (
-              <div key={p.orden} className="fila entre" style={{ fontSize: 14 }}>
-                <span className="texto-tenue">{p.postor} · {hace(p.aceptada_en)}</span>
-                <strong className="cifra">{bs(p.monto)}</strong>
-              </div>
-            ))}
-      </section>
-
-      <hr className="separador" style={{ margin: 0 }} />
-
-      {s.estado === "abierta" && (
-        <>
-          <p className="texto-chico">Mínimo para ofertar: {bs(minimo)} · Incremento mínimo: {bs(s.incremento_minimo)}</p>
-          <div className="campo">
-            <label htmlFor="monto">Tu oferta (Bs)</label>
-            <input id="monto" className="entrada cifra" inputMode="decimal" value={monto}
-              onChange={(e) => setMonto(e.target.value)} disabled={!puedeOfertar} />
-          </div>
-        </>
-      )}
-
-      {!conSesion && s.estado === "abierta" ? (
-        <Link className="boton boton-bloque" href={`/ingresar?volver=/sala/${s.codigo_sala}`}>Ingresa para ofertar</Link>
-      ) : esVendedorDeLaSala ? (
-        <p className="aviso">Esta es tu subasta: no puedes pujar en ella.</p>
-      ) : (
-        <button className="boton boton-bloque" disabled={!puedeOfertar}
-          onClick={() => enviar(crypto.randomUUID(), monto)}>
-          {s.estado === "abierta" ? `Ofertar ${bs(monto)}` : s.estado === "cerrada" ? "Subasta cerrada" : "Aún no abre"}
-        </button>
-      )}
-      <p className="texto-chico">Solo cuentan las pujas aceptadas aquí, no los comentarios del live. Enviar una oferta no la acepta: espera la confirmación.</p>
     </main>
   );
 }
 
 function EstadoMiOferta({ mia, onReintentar }: { mia: MiOferta; onReintentar: () => void }) {
   if (mia.fase === "enviando")
-    return <p className="aviso" role="status"><strong>Enviando tu puja de {bs(mia.monto)}</strong><br />Esperando confirmación de la sala.</p>;
+    return <div className="aviso aviso-neutro" role="status"><strong>Enviando tu puja de {bs(mia.monto)}</strong>Esperando la confirmación de la sala.</div>;
   if (mia.fase === "aceptada")
-    return <p className="aviso" role="status"><strong>Puja aceptada: {bs(mia.monto)}</strong><br />{mia.mensaje}</p>;
+    return <div className="aviso aviso-propio" role="status"><strong>Puja aceptada: {bs(mia.monto)}</strong>{mia.mensaje}</div>;
   if (mia.fase === "rechazada")
-    return <p className="aviso aviso-alerta" role="status"><strong>Puja rechazada: {bs(mia.monto)}</strong><br />{mia.mensaje}</p>;
+    return <div className="aviso aviso-error" role="status"><strong>Puja rechazada: {bs(mia.monto)}</strong>{mia.mensaje}</div>;
   return (
-    <div className="aviso aviso-alerta pila" role="status" style={{ gap: 8 }}>
-      <span><strong>No pudimos confirmar tu puja de {bs(mia.monto)}</strong><br />Puede haberse registrado. Reintentar no la duplica.</span>
-      <button className="boton boton-secundario" onClick={onReintentar}>Reintentar</button>
+    <div className="aviso aviso-error pila" role="status" style={{ gap: 10 }}>
+      <span><strong>No pudimos confirmar tu puja de {bs(mia.monto)}</strong>Puede haberse registrado. Reintentar no la duplica.</span>
+      <button className="boton boton-secundario boton-chico" style={{ alignSelf: "flex-start" }} onClick={onReintentar}>Reintentar</button>
     </div>
   );
 }

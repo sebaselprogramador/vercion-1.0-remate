@@ -13,9 +13,15 @@ export default async function NuevaSubasta() {
   const { data: categorias } = await supabase.from("categorias").select("id, nombre").order("id");
 
   return (
-    <main className="contenedor">
+    <>
       <Navegacion activa="/vendedor/nueva" />
-      <FormularioSubasta tiendaId={sesion.tienda.id} categorias={categorias ?? []} />
-    </main>
+      <main className="contenedor pagina">
+        <div className="pila" style={{ gap: 6 }}>
+          <h1 className="titulo-pagina">Nueva subasta</h1>
+          <p className="texto-guia">Prepárala antes del live. Se abre cuando tú lo decidas, desde la sala.</p>
+        </div>
+        <FormularioSubasta tiendaId={sesion.tienda.id} tiendaNombre={sesion.tienda.nombre} categorias={categorias ?? []} />
+      </main>
+    </>
   );
 }

@@ -21,58 +21,69 @@ export default async function PanelVendedor() {
     .order("creado_en", { ascending: false });
   const subastas = (data ?? []).map((f) => aEstadoSala(f));
   const contar = (...e: string[]) => subastas.filter((s) => e.includes(s.estado)).length;
+  const recaudado = subastas.filter((s) => s.estado === "cerrada" && s.monto_ganador)
+    .reduce((t, s) => t + Math.round(Number(s.monto_ganador) * 100), 0) / 100;
 
   return (
-    <main className="contenedor">
+    <>
       <Navegacion activa="/vendedor" />
-
-      <section className="bloque-destacado fila entre envolver" style={{ gap: 20 }}>
-        <div className="pila" style={{ gap: 8 }}>
-          <span className="texto-tenue">{sesion.tienda?.usuario_tiktok ?? "Sin usuario de TikTok"} · {sesion.tienda?.ciudad ?? "Cochabamba"}</span>
-          <h1 className="titular" style={{ fontSize: 40 }}>Hola, {sesion.tienda?.nombre ?? sesion.nombre}.</h1>
-          <p className="texto-tenue">Prepara tus subastas antes del live y abre la sala cuando presentes el producto.</p>
+      <main className="contenedor pagina">
+        <div className="encabezado">
+          <div className="pila">
+            <h1 className="titulo-pagina">{sesion.tienda?.nombre ?? "Mis subastas"}</h1>
+            <p className="texto-tenue">
+              {sesion.tienda?.usuario_tiktok ? `${sesion.tienda.usuario_tiktok} en TikTok, ` : ""}{sesion.tienda?.ciudad ?? "Cochabamba"}
+            </p>
+          </div>
+          {sesion.tienda
+            ? <Link href="/vendedor/nueva" className="boton">Nueva subasta</Link>
+            : <Link href="/vendedor/registro" className="boton">Registrar mi tienda</Link>}
         </div>
-        {sesion.tienda
-          ? <Link href="/vendedor/nueva" className="boton">Nueva subasta</Link>
-          : <Link href="/vendedor/registro" className="boton">Registrar mi tienda</Link>}
-      </section>
 
-      <section className="grilla-3" style={{ margin: "22px 0" }} aria-label="Resumen">
-        <div className="tarjeta"><p className="texto-tenue">En curso</p><p className="monto-grande cifra">{contar("abierta")}</p></div>
-        <div className="tarjeta"><p className="texto-tenue">Por abrir o en borrador</p><p className="monto-grande cifra">{contar("programada", "borrador")}</p></div>
-        <div className="tarjeta"><p className="texto-tenue">Cerradas</p><p className="monto-grande cifra">{contar("cerrada")}</p></div>
-      </section>
+        <section className="metricas" aria-label="Resumen">
+          <div className="metrica"><span className="texto-chico">En curso ahora</span><p className="valor">{contar("abierta")}</p></div>
+          <div className="metrica"><span className="texto-chico">Listas o en borrador</span><p className="valor">{contar("programada", "borrador")}</p></div>
+          <div className="metrica"><span className="texto-chico">Adjudicado en subastas cerradas</span><p className="valor">{bs(recaudado)}</p></div>
+        </section>
 
-      <section className="tarjeta" style={{ marginBottom: 24 }}>
-        <h2 className="titulo-seccion" style={{ fontSize: 22, marginBottom: 16 }}>Mis subastas</h2>
-        {subastas.length === 0 ? (
-          <p className="texto-tenue">Todavía no creaste subastas. Empieza con «Nueva subasta».</p>
-        ) : (
-          <table className="tabla">
-            <thead>
-              <tr><th>Producto</th><th>Estado</th><th>Sala</th><th>Oferta vigente</th><th>Pujas</th><th>Resultado</th><th></th></tr>
-            </thead>
-            <tbody>
-              {subastas.map((s) => (
-                <tr key={s.codigo_sala}>
-                  <td><strong>{s.producto}</strong><br /><span className="texto-chico">{s.categoria ?? "Sin categoría"}</span></td>
-                  <td><EstadoChip estado={s.estado} /></td>
-                  <td className="codigo">{s.codigo_sala}</td>
-                  <td className="cifra">{s.oferta_vigente != null ? bs(s.oferta_vigente) : <span className="texto-tenue">Desde {bs(s.precio_inicial)}</span>}</td>
-                  <td className="cifra">{s.total_pujas}</td>
-                  <td>{s.estado === "cerrada" ? (s.ganador ? `${s.ganador} · ${bs(s.monto_ganador)}` : "Sin ganador")
-                      : s.estado === "abierta" ? "En curso" : `Dura ${reloj(s.duracion_seg)}`}</td>
-                  <td style={{ textAlign: "right" }}>
-                    <Link className="boton boton-secundario" href={`/vendedor/sala/${s.codigo_sala}`}>
-                      {s.estado === "abierta" ? "Ir a la sala" : s.estado === "cerrada" ? "Ver resultado" : "Preparar"}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-    </main>
+        <section className="panel pila" style={{ gap: 16 }}>
+          <h2 className="titulo-seccion">Subastas</h2>
+          {subastas.length === 0 ? (
+            <div className="pila" style={{ gap: 10, alignItems: "flex-start", padding: "8px 0" }}>
+              <p className="texto-guia">Prepara una subasta antes de tu live: producto, precio inicial e incremento. Al abrirla, la sala empieza a recibir pujas.</p>
+              <Link href="/vendedor/nueva" className="boton boton-secundario">Preparar mi primera subasta</Link>
+            </div>
+          ) : (
+            <table className="tabla">
+              <thead>
+                <tr><th>Producto</th><th>Estado</th><th className="ocultar-movil">Sala</th><th className="derecha">Precio</th><th className="derecha ocultar-movil">Pujas</th><th className="ocultar-movil">Resultado</th><th></th></tr>
+              </thead>
+              <tbody>
+                {subastas.map((s) => (
+                  <tr key={s.codigo_sala}>
+                    <td><strong>{s.producto}</strong><br /><span className="texto-chico">{s.categoria ?? "Sin categoría"}</span></td>
+                    <td><EstadoChip estado={s.estado} /></td>
+                    <td className="codigo ocultar-movil">{s.codigo_sala}</td>
+                    <td className="derecha cifra" style={{ fontWeight: 600 }}>
+                      {s.oferta_vigente != null ? bs(s.oferta_vigente) : <span className="texto-tenue" style={{ fontWeight: 400 }}>desde {bs(s.precio_inicial)}</span>}
+                    </td>
+                    <td className="derecha cifra ocultar-movil">{s.total_pujas}</td>
+                    <td className="ocultar-movil">
+                      {s.estado === "cerrada" ? (s.ganador ? `${s.ganador}, ${bs(s.monto_ganador)}` : "Sin ganador")
+                        : s.estado === "abierta" ? "En curso" : <span className="texto-tenue">Dura {reloj(s.duracion_seg)}</span>}
+                    </td>
+                    <td className="derecha">
+                      <Link className="boton boton-secundario boton-chico" href={`/vendedor/sala/${s.codigo_sala}`}>
+                        {s.estado === "abierta" ? "Ir a la sala" : s.estado === "cerrada" ? "Ver resultado" : "Preparar"}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </main>
+    </>
   );
 }

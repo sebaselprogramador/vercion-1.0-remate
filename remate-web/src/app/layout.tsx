@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
+const fuente = Schibsted_Grotesk({
   subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--fuente-outfit",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--fuente",
 });
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body className={outfit.variable}>{children}</body>
+      <body className={fuente.variable}>{children}</body>
     </html>
   );
 }

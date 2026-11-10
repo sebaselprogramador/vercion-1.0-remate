@@ -76,9 +76,10 @@ export function useSala(inicial: EstadoSala) {
 }
 
 /** Segundos restantes según la hora del servidor. Es solo informativo: el cierre lo decide el servidor. */
-export function useSegundosRestantes(cierraEn: string | null, desfaseMs: number) {
+export function useSegundosRestantes(cierraEn: string | null, desfaseMs: number): number | null {
   const calcular = () => (cierraEn ? Math.max(0, (new Date(cierraEn).getTime() - (Date.now() + desfaseMs)) / 1000) : 0);
-  const [seg, setSeg] = useState(calcular);
+  // null hasta montar en el navegador: el servidor no conoce la hora del visitante.
+  const [seg, setSeg] = useState<number | null>(null);
   useEffect(() => {
     setSeg(calcular());
     const t = setInterval(() => setSeg(calcular()), 500);

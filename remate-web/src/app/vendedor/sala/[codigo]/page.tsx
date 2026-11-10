@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Navegacion } from "@/components/Navegacion";
 import { cargarSala } from "@/lib/salas";
 import { requerirRol } from "@/lib/sesion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -12,5 +13,10 @@ export default async function PaginaSalaVendedor({ params }: { params: Promise<{
   const supabase = await crearClienteServidor();
   const sala = await cargarSala(supabase, decodeURIComponent(codigo));
   if (!sala || sala.vendedor_id !== sesion.usuarioId) notFound();
-  return <SalaVendedor inicial={sala} />;
+  return (
+    <>
+      <Navegacion activa="/vendedor" />
+      <SalaVendedor inicial={sala} />
+    </>
+  );
 }

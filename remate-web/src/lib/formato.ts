@@ -15,6 +15,13 @@ export function bs(monto: number | string | null | undefined) {
   return `Bs ${n.toLocaleString("es-BO", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+/** Solo la cifra, sin "Bs" (para el tablero de precio). */
+export function cifra(monto: number | string | null | undefined) {
+  if (monto == null) return "—";
+  const n = typeof monto === "string" ? Number(monto) : monto;
+  return n.toLocaleString("es-BO", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
 /** Suma dos importes decimales con exactitud de centavos (evita errores de punto flotante). */
 export function sumarMontos(a: number | string, b: number | string) {
   const c = Math.round(Number(a) * 100) + Math.round(Number(b) * 100);
