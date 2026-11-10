@@ -1,0 +1,9 @@
+{
+  "name": "Remate — Pantallas del vendedor",
+  "id": "remate-pantallas-vendedor-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": { "allowedDomains": ["none"] }
+}
