@@ -73,60 +73,56 @@ export default function Ingresar() {
   }
 
   return (
-    <main className="centro contenedor">
-      <div className="caja">
-        <Link href="/" aria-label="Remate, inicio"><Logotipo ancho={120} /></Link>
+    <main className="marco-movil pila" style={{ gap: 20, paddingTop: 48 }}>
+      <Link href="/" className="marca" aria-label="Remate, inicio"><Logotipo ancho={104} /></Link>
 
-        {usuario ? (
-          <section className="panel pila" style={{ gap: 16 }}>
-            <div className="pila" style={{ gap: 4 }}>
-              <h1 className="titulo-seccion">Sesión iniciada</h1>
-              <p className="texto-tenue">{usuario.email}</p>
-            </div>
-            <Link className="boton boton-grande" href="/">Ver subastas</Link>
-            <button className="boton boton-secundario" onClick={async () => { await supabase.auth.signOut(); router.refresh(); }}>Cerrar sesión</button>
-          </section>
-        ) : (
-          <form className="panel pila" style={{ gap: 18 }} onSubmit={enviar}>
-            <div className="segmentado" role="group" aria-label="Tipo de acceso" style={{ alignSelf: "flex-start" }}>
-              <button type="button" aria-pressed={modo === "ingresar"} onClick={() => setModo("ingresar")}>Ingresar</button>
-              <button type="button" aria-pressed={modo === "registrarse"} onClick={() => setModo("registrarse")}>Crear cuenta</button>
-            </div>
-            <div className="pila" style={{ gap: 4 }}>
-              <h1 className="titulo-seccion" style={{ fontSize: 24 }}>{modo === "ingresar" ? "Ingresa a tu cuenta" : "Crea tu cuenta"}</h1>
-              <p className="texto-chico">{modo === "ingresar" ? "Para ofertar en las salas o administrar tus subastas." : "Con ella podrás ofertar. Si vendes, luego registras tu tienda."}</p>
-            </div>
+      {usuario ? (
+        <section className="tarjeta pila" style={{ gap: 12 }}>
+          <h1 className="titulo-tarjeta">Sesión iniciada</h1>
+          <p className="texto-tenue">{usuario.email}</p>
+          <div className="grilla-2" style={{ gap: 10 }}>
+            <Link className="boton" href="/">Ir a la vitrina</Link>
+            <Link className="boton boton-secundario" href="/vendedor">Panel del vendedor</Link>
+          </div>
+          <button className="boton boton-secundario" onClick={async () => { await supabase.auth.signOut(); router.refresh(); }}>Cerrar sesión</button>
+        </section>
+      ) : (
+        <form className="tarjeta pila" style={{ gap: 16 }} onSubmit={enviar}>
+          <div className="fila" style={{ gap: 8 }}>
+            <button type="button" className={`chip ${modo === "ingresar" ? "chip-activo" : ""}`} onClick={() => setModo("ingresar")}>Ingresar</button>
+            <button type="button" className={`chip ${modo === "registrarse" ? "chip-activo" : ""}`} onClick={() => setModo("registrarse")}>Crear cuenta</button>
+          </div>
+          <h1 className="titulo-seccion" style={{ fontSize: 24 }}>
+            {modo === "ingresar" ? "Ingresa para pujar" : "Crea tu cuenta"}
+          </h1>
 
-            {modo === "registrarse" && (
-              <div className="campo">
-                <label htmlFor="nombre">Nombre visible</label>
-                <input id="nombre" className="entrada" value={nombre} onChange={(e) => setNombre(e.target.value)}
-                  required maxLength={60} autoComplete="nickname" />
-                <span className="ayuda">Así aparecerás en el historial de pujas.</span>
-              </div>
-            )}
+          {modo === "registrarse" && (
             <div className="campo">
-              <label htmlFor="correo">Correo</label>
-              <input id="correo" type="email" autoComplete="email" className="entrada" value={correo}
-                onChange={(e) => setCorreo(e.target.value)} required />
+              <label htmlFor="nombre">Nombre visible</label>
+              <input id="nombre" className="entrada" value={nombre} onChange={(e) => setNombre(e.target.value)}
+                required maxLength={60} placeholder="Así te verán en las pujas" />
             </div>
-            <div className="campo">
-              <label htmlFor="clave">Contraseña</label>
-              <input id="clave" type="password" className="entrada" value={clave} onChange={(e) => setClave(e.target.value)}
-                autoComplete={modo === "ingresar" ? "current-password" : "new-password"} required minLength={6} />
-              {modo === "registrarse" && <span className="ayuda">Al menos 6 caracteres.</span>}
-            </div>
+          )}
+          <div className="campo">
+            <label htmlFor="correo">Correo</label>
+            <input id="correo" type="email" autoComplete="email" className="entrada" value={correo}
+              onChange={(e) => setCorreo(e.target.value)} required />
+          </div>
+          <div className="campo">
+            <label htmlFor="clave">Contraseña</label>
+            <input id="clave" type="password" className="entrada" value={clave} onChange={(e) => setClave(e.target.value)}
+              autoComplete={modo === "ingresar" ? "current-password" : "new-password"} required minLength={6} />
+          </div>
 
-            {error && <p className="aviso aviso-error" role="alert">{error}</p>}
-            {aviso && <p className="aviso" role="status">{aviso}</p>}
+          {error && <p className="aviso aviso-alerta" role="alert">{error}</p>}
+          {aviso && <p className="aviso" role="status">{aviso}</p>}
 
-            <button className="boton boton-grande boton-bloque" disabled={cargando}>
-              {cargando ? "Un momento…" : modo === "ingresar" ? "Ingresar" : "Crear cuenta"}
-            </button>
-          </form>
-        )}
-        <p className="texto-chico">Una cuenta identifica a quien puja; no verifica documentos de identidad.</p>
-      </div>
+          <button className="boton boton-bloque" disabled={cargando}>
+            {cargando ? "Un momento…" : modo === "ingresar" ? "Ingresar" : "Crear cuenta"}
+          </button>
+          <p className="texto-chico">Una cuenta identifica a quien puja; no verifica documentos de identidad.</p>
+        </form>
+      )}
     </main>
   );
 }

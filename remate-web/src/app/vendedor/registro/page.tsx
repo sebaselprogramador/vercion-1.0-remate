@@ -33,7 +33,12 @@ export default async function RegistroVendedor() {
               ))}
             </ol>
           </section>
-          <FormularioTienda />
+          {sesion.activo ? <FormularioTienda /> : (
+            <section className="tarjeta pila" style={{ gap: 8, alignSelf: "start" }}>
+              <h2 className="titulo-tarjeta">No puedes registrar una tienda</h2>
+              <p className="texto-tenue">Tu cuenta está suspendida por administración.</p>
+            </section>
+          )}
         </div>
       </main>
     </>

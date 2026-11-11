@@ -265,3 +265,47 @@ textarea.entrada { padding: 12px 14px; min-height: 104px; resize: vertical; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
+
+/* ── Estructura de las pantallas originales con el estilo nuevo ──
+   Las pantallas conservan su funcionamiento y sus textos; solo cambia su aspecto. */
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 18px 0; margin-bottom: 28px; border-bottom: 1px solid var(--linea); }
+.nav .nav-enlaces { flex: 1; align-items: center; }
+.nav .nav-enlaces a { padding: 6px 0; border-bottom: 2px solid transparent; }
+.nav .nav-enlaces a[aria-current="page"] { border-bottom-color: var(--verde); }
+.nav .nav-enlaces span { margin-left: auto; color: var(--tenue); font-weight: 400; }
+.marca { display: inline-flex; align-items: center; flex-shrink: 0; }
+
+.tarjeta { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio-l); padding: 24px; }
+.bloque-destacado { background: var(--verde-suave); border-radius: var(--radio-l); padding: 36px; }
+.titular { font-size: 50px; line-height: 1.04; font-weight: 800; letter-spacing: -0.035em; color: var(--tinta); }
+
+.chip {
+  display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 999px; font-size: 14px; font-weight: 500;
+  color: var(--tinta-2); border: 1px solid var(--linea); background: var(--superficie); cursor: pointer;
+}
+.chip:hover { border-color: var(--linea-fuerte); }
+.chip-activo, .chip-activo:hover { background: var(--tinta); border-color: var(--tinta); color: #fff; }
+
+.aviso-alerta { background: var(--error-suave); border-left-color: var(--error); color: var(--error); }
+.etiqueta-ejemplo { display: inline-block; font-size: 12px; font-weight: 600; color: var(--error); background: var(--error-suave); padding: 3px 10px; border-radius: 999px; }
+
+.marco-movil { max-width: 460px; margin: 0 auto; padding: 24px 16px 48px; }
+.marco-movil > header { padding-bottom: 14px; border-bottom: 1px solid var(--linea); }
+
+/* Bloque de precio de las salas: tablero oscuro */
+.tablero-bloque { background: var(--tinta); border-color: var(--tinta); color: #fff; box-shadow: var(--sombra-tablero); padding: 26px 24px; }
+.tablero-bloque .texto-chico { color: rgba(255, 255, 255, .62); }
+.tablero-bloque .monto-grande { color: #fff; font-size: 50px; }
+.tablero-bloque .cifra { color: #fff; }
+
+/* Tablas y títulos dentro de tarjetas */
+.tarjeta .tabla th { padding-top: 4px; }
+.grilla-3 > .tarjeta .monto-grande { margin-top: 6px; }
+
+@media (max-width: 720px) {
+  .nav { gap: 12px; margin-bottom: 20px; }
+  .nav .boton { min-height: 38px; padding: 0 12px; font-size: 13px; }
+  .titular { font-size: 34px; }
+  .bloque-destacado { padding: 24px; }
+  .tablero-bloque .monto-grande { font-size: 42px; }
+}

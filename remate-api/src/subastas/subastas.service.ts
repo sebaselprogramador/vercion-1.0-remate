@@ -17,6 +17,12 @@ export interface ResultadoPuja {
 export class SubastasService {
   constructor(private readonly db: DbService) {}
 
+  /** El servidor se conecta sin las políticas por filas: comprueba aquí que la cuenta no esté suspendida. */
+  private async exigirCuentaActiva(usuarioId: string) {
+    const [p] = await this.db.consulta<{ activo: boolean }>(`select activo from public.perfiles where id = $1`, [usuarioId]);
+    if (!p || !p.activo) throw new ForbiddenException('cuenta_suspendida');
+  }
+
   /** Estado público de una sala: lo que un participante necesita ver, también tras reconectarse. */
   async estadoSala(codigo: string) {
     const [sala] = await this.db.consulta(
@@ -72,6 +78,7 @@ export class SubastasService {
     } catch (e) {
       const err = e as { code?: string; message?: string };
       if (err.code === 'P0002') throw new NotFoundException('sala_inexistente_o_ajena');
+      if (err.code === '42501') throw new ForbiddenException(err.message); // cuenta_suspendida o tienda_suspendida
       if (err.code === '22023') throw new ConflictException(err.message);
       throw e;
     }
@@ -84,6 +91,7 @@ export class SubastasService {
 
   /** Registra la tienda del vendedor y marca su perfil como vendedor. */
   async crearTienda(usuarioId: string, nombre: string, usuarioTiktok: string | null) {
+    await this.exigirCuentaActiva(usuarioId);
     const cliente = await this.db.pool.connect();
     try {
       await cliente.query('begin');
@@ -109,8 +117,10 @@ export class SubastasService {
     vendedorId: string,
     datos: { titulo: string; descripcion: string | null; categoria: string | null; precioInicial: string; incrementoMinimo: string; duracionSeg: number },
   ) {
-    const [tienda] = await this.db.consulta<{ id: string }>(`select id from public.tiendas where vendedor_id = $1`, [vendedorId]);
+    await this.exigirCuentaActiva(vendedorId);
+    const [tienda] = await this.db.consulta<{ id: string; activa: boolean }>(`select id, activa from public.tiendas where vendedor_id = $1`, [vendedorId]);
     if (!tienda) throw new ForbiddenException('primero_registra_tu_tienda');
+    if (!tienda.activa) throw new ForbiddenException('tienda_suspendida');
 
     const cliente = await this.db.pool.connect();
     try {

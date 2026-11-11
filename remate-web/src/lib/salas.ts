@@ -17,6 +17,8 @@ export interface EstadoSala {
   tienda: string;
   ciudad: string;
   vendedor_id?: string;
+  /** false si un administrador suspendió la tienda. Solo viene en las lecturas directas de Supabase. */
+  tienda_activa?: boolean;
   postor_vigente: string | null;
   ganador: string | null;
   monto_ganador: string | null;
@@ -28,7 +30,7 @@ type Uno<T> = T | T[] | null;
 const uno = <T,>(v: Uno<T>): T | null => (Array.isArray(v) ? v[0] ?? null : v);
 
 const SELECCION = `codigo_sala, estado, precio_inicial, incremento_minimo, duracion_seg, cierra_en, oferta_vigente, total_pujas,
-  productos!inner(titulo, descripcion, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id)),
+  productos!inner(titulo, descripcion, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id, activa)),
   postor:perfiles!subastas_postor_vigente_id_fkey(nombre_visible),
   adjudicaciones(monto, ganador:perfiles!adjudicaciones_ganador_id_fkey(nombre_visible))`;
 
@@ -51,6 +53,7 @@ export function aEstadoSala(f: any, pujas: any[] = []): EstadoSala {
     tienda: uno<any>(p?.tiendas)?.nombre ?? "",
     ciudad: uno<any>(p?.tiendas)?.ciudad ?? "",
     vendedor_id: uno<any>(p?.tiendas)?.vendedor_id,
+    tienda_activa: uno<any>(p?.tiendas)?.activa,
     postor_vigente: uno<any>(f.postor)?.nombre_visible ?? null,
     ganador: uno<any>(adj?.ganador)?.nombre_visible ?? null,
     monto_ganador: adj?.monto != null ? String(adj.monto) : null,
@@ -76,12 +79,13 @@ export async function cargarSala(supabase: SupabaseClient, codigo: string): Prom
   return aEstadoSala(data, pujas ?? []);
 }
 
-/** Lista de salas visibles para la vitrina. */
+/** Lista de salas visibles para la vitrina (sin las tiendas suspendidas). */
 export async function listarSalas(supabase: SupabaseClient, estados: EstadoSubasta[]) {
   const { data } = await supabase
     .from("subastas")
     .select(SELECCION)
     .in("estado", estados)
+    .eq("productos.tiendas.activa", true)
     .order("creado_en", { ascending: false })
     .limit(30);
   return (data ?? []).map((f) => aEstadoSala(f));

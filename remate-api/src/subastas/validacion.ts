@@ -63,6 +63,8 @@ export const mensajeRechazo: Record<string, string> = {
   subasta_no_abierta: 'La subasta no está abierta.',
   plazo_vencido: 'El tiempo de la subasta terminó antes de recibir tu oferta.',
   vendedor_no_puede_pujar: 'No puedes pujar por tus propios productos.',
+  cuenta_suspendida: 'Tu cuenta está suspendida: no puedes pujar.',
+  tienda_suspendida: 'La tienda está suspendida: esta sala no acepta pujas.',
   monto_invalido: 'El monto no es válido.',
   monto_insuficiente: 'Otra persona ofertó antes o el monto no alcanza el mínimo.',
 };
