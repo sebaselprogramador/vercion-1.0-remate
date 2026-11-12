@@ -65,8 +65,7 @@ export function FormularioSubasta({ tiendaId, categorias }: { tiendaId: string; 
       .single();
     setGuardando(false);
     if (e2 || !subasta) return setErrorGuardar("Se guardó el producto, pero no la subasta. Inténtalo de nuevo.");
-    router.push(`/vendedor/sala/${subasta.codigo_sala}`);
-    router.refresh();
+    router.push(`/vendedor/sala?codigo=${subasta.codigo_sala}`);
   }
 
   return (

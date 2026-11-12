@@ -1,9 +1,10 @@
-import { redirect } from "next/navigation";
-import { Navegacion } from "@/components/Navegacion";
-import { obtenerSesion } from "@/lib/sesion";
-import { FormularioTienda } from "./FormularioTienda";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Navegacion } from "@/components/Navegacion";
+import { Cargando, useSesion } from "@/lib/sesion";
+import { FormularioTienda } from "./FormularioTienda";
 
 const pasos = [
   { titulo: "Prepara la subasta", texto: "Producto, precio inicial, incremento mínimo y duración." },
@@ -11,10 +12,12 @@ const pasos = [
   { titulo: "Abre y deja que pujen", texto: "Remate valida cada oferta y registra al ganador al cerrar." },
 ];
 
-export default async function RegistroVendedor() {
-  const sesion = await obtenerSesion();
-  if (!sesion) redirect("/ingresar?volver=/vendedor/registro");
-  if (sesion.tienda) redirect("/vendedor");
+export default function RegistroVendedor() {
+  const { sesion } = useSesion();
+  const router = useRouter();
+  const conTienda = !!sesion?.tienda;
+  useEffect(() => { if (conTienda) router.replace("/vendedor"); }, [conTienda, router]);
+  if (!sesion || conTienda) return <Cargando />;
 
   return (
     <>

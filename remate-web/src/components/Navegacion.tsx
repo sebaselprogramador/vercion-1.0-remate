@@ -1,12 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import { Logotipo } from "@/components/Logo";
-import { obtenerSesion, type Rol } from "@/lib/sesion";
+import { BotonSalir } from "@/components/BotonSalir";
+import { useSesion, type Rol } from "@/lib/sesion";
 
 const etiquetaRol: Record<Rol, string> = { comprador: "Comprador", vendedor: "Vendedor", administrador: "Administrador" };
 
 /** Barra de navegación. Los enlaces cambian según el rol de la cuenta. */
-export async function Navegacion({ activa }: { activa?: string }) {
-  const sesion = await obtenerSesion();
+export function Navegacion({ activa }: { activa?: string }) {
+  const { sesion } = useSesion();
   const enlaces: { href: string; texto: string }[] = [{ href: "/", texto: "Explorar subastas" }];
   if (sesion?.rol === "vendedor") {
     // Quien vende también puede comprar en las salas de otras tiendas.
@@ -29,9 +32,12 @@ export async function Navegacion({ activa }: { activa?: string }) {
         <span>Cochabamba, Bolivia</span>
       </div>
       {sesion ? (
-        <Link href="/ingresar" className="boton boton-secundario" title={sesion.correo ?? undefined}>
-          {sesion.nombre || "Mi cuenta"} · {etiquetaRol[sesion.rol]}
-        </Link>
+        <div className="fila" style={{ gap: 10 }}>
+          <span className="texto-chico" title={sesion.correo ?? undefined}>
+            <strong style={{ color: "var(--tinta)" }}>{sesion.nombre || "Mi cuenta"}</strong> · {etiquetaRol[sesion.rol]}
+          </span>
+          <BotonSalir />
+        </div>
       ) : (
         <Link href="/ingresar" className="boton">Iniciar sesión</Link>
       )}

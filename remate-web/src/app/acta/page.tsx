@@ -1,11 +1,12 @@
+"use client";
+
+import { Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Navegacion } from "@/components/Navegacion";
 import { bs } from "@/lib/formato";
-import { obtenerSesion } from "@/lib/sesion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
-import { redirect } from "next/navigation";
-
-export const dynamic = "force-dynamic";
+import { Cargando, useSesion } from "@/lib/sesion";
+import { useDatos } from "@/lib/useDatos";
 
 interface Acta {
   codigo_sala: string;
@@ -32,16 +33,27 @@ interface Acta {
 const fecha = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString("es-BO", { dateStyle: "medium", timeStyle: "medium", timeZone: "America/La_Paz" }) : "—";
 
-/** Acta de una subasta cerrada. La base de datos solo la entrega a su vendedor, al ganador y a los administradores. */
-export default async function PaginaActa({ params }: { params: Promise<{ codigo: string }> }) {
-  const { codigo } = await params;
-  const limpio = decodeURIComponent(codigo).toUpperCase();
-  const sesion = await obtenerSesion();
-  if (!sesion) redirect(`/ingresar?volver=${encodeURIComponent(`/acta/${limpio}`)}`);
+/** Acta de una subasta cerrada (/acta?codigo=RM-XXXXX). La base de datos solo la entrega a su vendedor, al ganador y a los administradores. */
+export default function PaginaActa() {
+  return <Suspense fallback={<Cargando />}><ActaSubasta /></Suspense>;
+}
 
-  const supabase = await crearClienteServidor();
-  const { data } = await supabase.rpc("acta_adjudicacion", { p_codigo_sala: limpio });
-  const acta = ((data ?? []) as Acta[])[0];
+function ActaSubasta() {
+  const limpio = (useSearchParams().get("codigo") ?? "").trim().toUpperCase();
+  const { supabase, sesion } = useSesion();
+  const { datos } = useDatos(async () => {
+    const { data } = await supabase.rpc("acta_adjudicacion", { p_codigo_sala: limpio });
+    const acta = ((data ?? []) as Acta[])[0];
+    if (!acta) return { acta: undefined, pujas: [] };
+    const { data: pujas } = await supabase
+      .from("pujas")
+      .select("orden, monto, aceptada_en, postor:perfiles(nombre_visible), subastas!inner(codigo_sala)")
+      .eq("subastas.codigo_sala", limpio)
+      .order("orden", { ascending: false });
+    return { acta, pujas: pujas ?? [] };
+  }, [supabase, limpio]);
+  if (!sesion || !datos) return <Cargando />;
+  const { acta, pujas } = datos;
 
   const volver = sesion.rol === "administrador" ? { href: "/admin", texto: "Volver a administración" }
     : acta && acta.vendedor_id === sesion.usuarioId ? { href: "/vendedor", texto: "Volver a mis subastas" }
@@ -60,11 +72,6 @@ export default async function PaginaActa({ params }: { params: Promise<{ codigo:
     );
   }
 
-  const { data: pujas } = await supabase
-    .from("pujas")
-    .select("orden, monto, aceptada_en, postor:perfiles(nombre_visible), subastas!inner(codigo_sala)")
-    .eq("subastas.codigo_sala", limpio)
-    .order("orden", { ascending: false });
   const ampliado = acta.cierre_previsto && acta.plazo_final && new Date(acta.plazo_final) > new Date(acta.cierre_previsto);
 
   return (

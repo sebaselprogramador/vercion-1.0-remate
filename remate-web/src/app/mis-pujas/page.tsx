@@ -1,10 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Navegacion } from "@/components/Navegacion";
 import { bs } from "@/lib/formato";
-import { requerirRol } from "@/lib/sesion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
-
-export const dynamic = "force-dynamic";
+import { Cargando, useRequerirRol, useSesion } from "@/lib/sesion";
+import { useDatos } from "@/lib/useDatos";
 
 type Uno<T> = T | T[] | null;
 const uno = <T,>(v: Uno<T>): T | null => (Array.isArray(v) ? v[0] ?? null : v);
@@ -23,17 +23,23 @@ interface Participacion {
 }
 
 /** Salas donde la cuenta pujó: compradores y también vendedores que compran en otras tiendas. */
-export default async function MisPujas() {
-  const sesion = await requerirRol(["comprador", "vendedor"], "/mis-pujas");
-  const supabase = await crearClienteServidor();
-  const { data } = await supabase
-    .from("pujas")
-    .select(`monto, orden,
-      subastas!inner(codigo_sala, estado, precio_inicial, oferta_vigente, postor_vigente_id,
-        productos!inner(titulo, tiendas!inner(nombre)),
-        adjudicaciones(ganador_id, monto))`)
-    .eq("postor_id", sesion.usuarioId)
-    .order("orden", { ascending: false });
+export default function MisPujas() {
+  const sesion = useRequerirRol(["comprador", "vendedor"]);
+  const { supabase } = useSesion();
+  const { datos } = useDatos(async () => {
+    if (!sesion) return null;
+    const { data } = await supabase
+      .from("pujas")
+      .select(`monto, orden,
+        subastas!inner(codigo_sala, estado, precio_inicial, oferta_vigente, postor_vigente_id,
+          productos!inner(titulo, tiendas!inner(nombre)),
+          adjudicaciones(ganador_id, monto))`)
+      .eq("postor_id", sesion.usuarioId)
+      .order("orden", { ascending: false });
+    return { data };
+  }, [supabase, sesion?.usuarioId]);
+  if (!sesion || !datos) return <Cargando />;
+  const { data } = datos;
 
   // Una fila por sala, con la mejor puja propia.
   const porSala = new Map<string, Participacion>();
@@ -101,8 +107,8 @@ export default async function MisPujas() {
                   <td><Situacion p={x} /></td>
                   <td className="derecha">
                     {x.gane
-                      ? <Link className="boton boton-secundario" href={`/acta/${x.codigo}`}>Ver acta</Link>
-                      : <Link className="boton boton-secundario" href={`/sala/${x.codigo}`}>Ver sala</Link>}
+                      ? <Link className="boton boton-secundario" href={`/acta?codigo=${x.codigo}`}>Ver acta</Link>
+                      : <Link className="boton boton-secundario" href={`/sala?codigo=${x.codigo}`}>Ver sala</Link>}
                   </td>
                 </tr>
               ))}

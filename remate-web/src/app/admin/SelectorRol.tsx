@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { crearClienteSupabase } from "@/lib/supabase/cliente";
 
 const roles = [
@@ -11,8 +10,7 @@ const roles = [
 ];
 
 /** Cambia el rol de una cuenta. La base de datos rechaza el cambio si quien lo pide no es administrador. */
-export function SelectorRol({ perfilId, rol, deshabilitado }: { perfilId: string; rol: string; deshabilitado: boolean }) {
-  const router = useRouter();
+export function SelectorRol({ perfilId, rol, deshabilitado, onCambio }: { perfilId: string; rol: string; deshabilitado: boolean; onCambio: () => void }) {
   const [valor, setValor] = useState(rol);
   const [estado, setEstado] = useState<"" | "guardando" | "error">("");
 
@@ -28,7 +26,7 @@ export function SelectorRol({ perfilId, rol, deshabilitado }: { perfilId: string
       return;
     }
     setEstado("");
-    router.refresh();
+    onCambio();
   }
 
   return (

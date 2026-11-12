@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Logotipo } from "@/components/Logo";
-import { useRouter } from "next/navigation";
 import { Ilustracion, ilustracionDeCategoria } from "@/components/Ilustracion";
 import { EstadoChip } from "@/components/EstadoChip";
 import { API_URL, bs, reloj, sumarMontos } from "@/lib/formato";
@@ -16,8 +15,7 @@ import { useSala, useSegundosRestantes } from "@/lib/useSala";
  * Sala del vendedor, pensada para el teléfono durante el live.
  * El contador es informativo: el cierre real lo decide el servidor con el vencimiento guardado.
  */
-export function SalaVendedor({ inicial, suspendida }: { inicial: EstadoSala; suspendida: boolean }) {
-  const router = useRouter();
+export function SalaVendedor({ inicial, suspendida, onCambio }: { inicial: EstadoSala; suspendida: boolean; onCambio: () => void }) {
   const { estado: s, conexion, desfaseMs } = useSala(inicial);
   const restante = useSegundosRestantes(s.cierra_en, desfaseMs);
   const [copiado, setCopiado] = useState<"codigo" | "enlace" | null>(null);
@@ -25,7 +23,7 @@ export function SalaVendedor({ inicial, suspendida }: { inicial: EstadoSala; sus
   const [ocupado, setOcupado] = useState(false);
 
   async function copiar(que: "codigo" | "enlace") {
-    const texto = que === "codigo" ? s.codigo_sala : `${window.location.origin}/sala/${s.codigo_sala}`;
+    const texto = que === "codigo" ? s.codigo_sala : `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/sala/?codigo=${s.codigo_sala}`;
     try {
       await navigator.clipboard.writeText(texto);
       setCopiado(que);
@@ -40,7 +38,7 @@ export function SalaVendedor({ inicial, suspendida }: { inicial: EstadoSala; sus
     const { error } = await crearClienteSupabase().from("subastas").update({ estado: "programada" }).eq("codigo_sala", s.codigo_sala);
     setOcupado(false);
     if (error) return setAviso("No se pudo actualizar la subasta.");
-    router.refresh();
+    onCambio();
   }
 
   async function abrir() {
@@ -60,7 +58,7 @@ export function SalaVendedor({ inicial, suspendida }: { inicial: EstadoSala; sus
         return;
       }
       if (!r.ok) throw new Error(String(r.status));
-      router.refresh();
+      onCambio();
     } catch {
       setAviso("No se pudo abrir la sala: el servidor de subastas no respondió. Verifica que esté en marcha.");
     } finally {
@@ -114,7 +112,7 @@ export function SalaVendedor({ inicial, suspendida }: { inicial: EstadoSala; sus
               <p className="texto-chico">{s.total_pujas} pujas aceptadas. Coordina el pago y la entrega con el ganador fuera de Remate.</p>
             </>
           ) : <p className="titulo-tarjeta">Terminó sin ofertas válidas.</p>}
-          <Link className="boton boton-secundario" href={`/acta/${s.codigo_sala}`} style={{ alignSelf: "flex-start" }}>Ver acta de adjudicación</Link>
+          <Link className="boton boton-secundario" href={`/acta?codigo=${s.codigo_sala}`} style={{ alignSelf: "flex-start" }}>Ver acta de adjudicación</Link>
         </section>
       ) : (
         <section className="tarjeta tablero-bloque fila entre">

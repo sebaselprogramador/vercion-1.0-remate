@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ProveedorSesion } from "@/lib/sesion";
 
 const fuente = Schibsted_Grotesk({
   subsets: ["latin"],
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es">
-      <body className={fuente.variable}>{children}</body>
+      <body className={fuente.variable}><ProveedorSesion>{children}</ProveedorSesion></body>
     </html>
   );
 }

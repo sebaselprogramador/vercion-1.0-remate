@@ -1,4 +1,8 @@
+"use client";
+
+import { Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Navegacion } from "@/components/Navegacion";
 
 const textos: Record<string, { titulo: string; detalle: string; accion?: { href: string; texto: string } }> = {
@@ -13,8 +17,12 @@ const textos: Record<string, { titulo: string; detalle: string; accion?: { href:
   },
 };
 
-export default async function SinPermiso({ searchParams }: { searchParams: Promise<{ rol?: string }> }) {
-  const { rol } = await searchParams;
+export default function SinPermiso() {
+  return <Suspense><Contenido /></Suspense>;
+}
+
+function Contenido() {
+  const rol = useSearchParams().get("rol");
   const t = textos[rol ?? ""] ?? { titulo: "No tienes permiso para ver esta página", detalle: "" };
   return (
     <main className="contenedor">

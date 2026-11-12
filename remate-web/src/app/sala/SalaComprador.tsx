@@ -104,7 +104,7 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
           <p className="texto-tenue">Subasta cerrada</p>
           {s.ganador
             ? <><p className="titulo-tarjeta">Ganó {s.ganador}</p><p className="monto-grande cifra">{bs(s.monto_ganador)}</p>
-                {gane && <Link className="boton boton-secundario" href={`/acta/${s.codigo_sala}`} style={{ alignSelf: "flex-start" }}>Ver acta de adjudicación</Link>}</>
+                {gane && <Link className="boton boton-secundario" href={`/acta?codigo=${s.codigo_sala}`} style={{ alignSelf: "flex-start" }}>Ver acta de adjudicación</Link>}</>
             : <p className="titulo-tarjeta">Terminó sin ofertas válidas.</p>}
         </section>
       ) : (

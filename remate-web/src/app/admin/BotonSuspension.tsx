@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { crearClienteSupabase } from "@/lib/supabase/cliente";
 
 /**
  * Suspende o reactiva una cuenta o una tienda. La base de datos rechaza el cambio si quien lo pide
  * no es administrador, y nunca permite suspender a un administrador.
  */
-export function BotonSuspension({ tipo, id, activo, nombre }: { tipo: "cuenta" | "tienda"; id: string; activo: boolean; nombre: string }) {
-  const router = useRouter();
+export function BotonSuspension({ tipo, id, activo, nombre, onCambio }: { tipo: "cuenta" | "tienda"; id: string; activo: boolean; nombre: string; onCambio: () => void }) {
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState(false);
 
@@ -23,7 +21,7 @@ export function BotonSuspension({ tipo, id, activo, nombre }: { tipo: "cuenta" |
       : await supabase.from("tiendas").update({ activa: !activo }).eq("id", id);
     setOcupado(false);
     if (error) return setError(true);
-    router.refresh();
+    onCambio();
   }
 
   return (

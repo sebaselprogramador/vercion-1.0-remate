@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { crearClienteSupabase } from "@/lib/supabase/cliente";
+import { useSesion } from "@/lib/sesion";
 
 /** Registra la tienda de la cuenta actual. La base cambia el rol a "vendedor" en la misma operación. */
 export function FormularioTienda() {
   const router = useRouter();
+  const { supabase, recargar } = useSesion();
   const [nombre, setNombre] = useState("");
   const [tiktok, setTiktok] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,11 +21,11 @@ export function FormularioTienda() {
     if (n.length < 2 || n.length > 80) return setError("El nombre debe tener entre 2 y 80 caracteres.");
     if (t && !/^@?[A-Za-z0-9._]{2,24}$/.test(t)) return setError("Usuario de TikTok no válido. Ejemplo: @casanorte.cbba");
     setCargando(true);
-    const { error } = await crearClienteSupabase().rpc("registrar_tienda", { p_nombre: n, p_usuario_tiktok: t || null });
+    const { error } = await supabase.rpc("registrar_tienda", { p_nombre: n, p_usuario_tiktok: t || null });
     setCargando(false);
     if (error) return setError(error.message.includes("duplicate") ? "Tu cuenta ya tiene una tienda." : "No se pudo registrar la tienda.");
+    await recargar(); // el rol pasó a "vendedor"
     router.push("/vendedor");
-    router.refresh();
   }
 
   return (

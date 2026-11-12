@@ -1,20 +1,33 @@
+"use client";
+
+import { Suspense } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Navegacion } from "@/components/Navegacion";
 import { Ilustracion, ilustracionDeCategoria } from "@/components/Ilustracion";
 import { EstadoChip } from "@/components/EstadoChip";
 import { bs } from "@/lib/formato";
 import { listarSalas } from "@/lib/salas";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { Cargando, useSesion } from "@/lib/sesion";
+import { useDatos } from "@/lib/useDatos";
 
-export const dynamic = "force-dynamic";
+export default function PaginaVitrina() {
+  return <Suspense fallback={<Cargando />}><Vitrina /></Suspense>;
+}
 
-export default async function Vitrina({ searchParams }: { searchParams: Promise<{ categoria?: string }> }) {
-  const { categoria } = await searchParams;
-  const supabase = await crearClienteServidor();
-  const [salas, { data: categorias }] = await Promise.all([
-    listarSalas(supabase, ["abierta", "programada"]),
-    supabase.from("categorias").select("nombre").order("id"),
-  ]);
+function Vitrina() {
+  const categoria = useSearchParams().get("categoria");
+  const router = useRouter();
+  const { supabase } = useSesion();
+  const { datos } = useDatos(async () => {
+    const [salas, { data: categorias }] = await Promise.all([
+      listarSalas(supabase, ["abierta", "programada"]),
+      supabase.from("categorias").select("nombre").order("id"),
+    ]);
+    return { salas, categorias };
+  }, [supabase]);
+  if (!datos) return <Cargando />;
+  const { salas, categorias } = datos;
   const visibles = categoria ? salas.filter((s) => s.categoria === categoria) : salas;
 
   return (
@@ -34,7 +47,11 @@ export default async function Vitrina({ searchParams }: { searchParams: Promise<
         <div style={{ width: 360, maxWidth: "100%" }}><Ilustracion tipo="sillon" alto={200} /></div>
       </section>
 
-      <form action="/sala" className="tarjeta fila envolver" style={{ gap: 16, marginTop: 22 }}>
+      <form className="tarjeta fila envolver" onSubmit={(e) => {
+        e.preventDefault();
+        const codigo = String(new FormData(e.currentTarget).get("codigo") ?? "").trim().toUpperCase();
+        if (codigo) router.push(`/sala?codigo=${encodeURIComponent(codigo)}`);
+      }} style={{ gap: 16, marginTop: 22 }}>
         <h2 className="titulo-tarjeta" style={{ fontSize: 18, minWidth: 220 }}>¿Vienes de un live?</h2>
         <input className="entrada" name="codigo" placeholder="Ej. RM-4821" aria-label="Código de sala" style={{ maxWidth: 320 }} />
         <button className="boton" type="submit" style={{ minWidth: 200 }}>Entrar a la sala</button>
@@ -65,7 +82,7 @@ export default async function Vitrina({ searchParams }: { searchParams: Promise<
               <p className="texto-tenue" style={{ fontSize: 13 }}>{s.tienda} · {s.ciudad}</p>
               <div className="fila entre">
                 <span className="monto cifra">{bs(s.oferta_vigente ?? s.precio_inicial)}</span>
-                <Link className="boton" href={`/sala/${s.codigo_sala}`}>Ver sala</Link>
+                <Link className="boton" href={`/sala?codigo=${s.codigo_sala}`}>Ver sala</Link>
               </div>
             </article>
           ))}

@@ -309,3 +309,20 @@ textarea.entrada { padding: 12px 14px; min-height: 104px; resize: vertical; }
   .bloque-destacado { padding: 24px; }
   .tablero-bloque .monto-grande { font-size: 42px; }
 }
+
+/* ── Pantalla de ingreso ────────────────────────────────── */
+.ingreso { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--fondo); }
+.ingreso-marca { background: var(--tinta); color: #f3f4f1; padding: 40px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+.ingreso-lugar { font-size: 14px; color: #a9b8ae; margin-top: 10px; }
+.ingreso-martillo { position: absolute; right: -60px; bottom: -40px; width: 380px; height: 380px; }
+.ingreso-panel { display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+.ingreso-caja { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 18px; }
+.ingreso-pestanas { display: flex; gap: 4px; padding: 4px; background: var(--linea); border-radius: 14px; }
+.ingreso-pestanas button { flex: 1; border: 0; background: transparent; border-radius: 10px; min-height: 40px; font: inherit; font-weight: 600; color: var(--tenue); cursor: pointer; }
+.ingreso-pestanas button[aria-selected="true"] { background: var(--superficie); color: var(--tinta); box-shadow: 0 1px 2px rgba(18, 36, 27, .12); }
+@media (max-width: 760px) {
+  .ingreso { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .ingreso-marca { padding: 24px 16px; min-height: 120px; }
+  .ingreso-martillo { width: 180px; height: 180px; right: -30px; bottom: -50px; opacity: .5; }
+  .ingreso-panel { align-items: flex-start; padding-top: 28px; }
+}

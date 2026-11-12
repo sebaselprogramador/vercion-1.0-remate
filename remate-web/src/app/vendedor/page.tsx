@@ -1,24 +1,30 @@
+"use client";
+
 import Link from "next/link";
 import { Navegacion } from "@/components/Navegacion";
 import { EstadoChip } from "@/components/EstadoChip";
 import { bs, reloj } from "@/lib/formato";
 import { aEstadoSala } from "@/lib/salas";
-import { requerirRol } from "@/lib/sesion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { Cargando, useRequerirRol, useSesion } from "@/lib/sesion";
+import { useDatos } from "@/lib/useDatos";
 
-export const dynamic = "force-dynamic";
-
-export default async function PanelVendedor() {
-  const sesion = await requerirRol(["vendedor"], "/vendedor");
-  const supabase = await crearClienteServidor();
-  const { data } = await supabase
-    .from("subastas")
-    .select(`codigo_sala, estado, precio_inicial, incremento_minimo, duracion_seg, cierra_en, oferta_vigente, total_pujas,
-      productos!inner(titulo, descripcion, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id)),
-      postor:perfiles!subastas_postor_vigente_id_fkey(nombre_visible),
-      adjudicaciones(monto, ganador:perfiles!adjudicaciones_ganador_id_fkey(nombre_visible))`)
-    .eq("productos.tiendas.vendedor_id", sesion.usuarioId)
-    .order("creado_en", { ascending: false });
+export default function PanelVendedor() {
+  const sesion = useRequerirRol(["vendedor"]);
+  const { supabase } = useSesion();
+  const { datos } = useDatos(async () => {
+    if (!sesion) return null;
+    const { data } = await supabase
+      .from("subastas")
+      .select(`codigo_sala, estado, precio_inicial, incremento_minimo, duracion_seg, cierra_en, oferta_vigente, total_pujas,
+        productos!inner(titulo, descripcion, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id)),
+        postor:perfiles!subastas_postor_vigente_id_fkey(nombre_visible),
+        adjudicaciones(monto, ganador:perfiles!adjudicaciones_ganador_id_fkey(nombre_visible))`)
+      .eq("productos.tiendas.vendedor_id", sesion.usuarioId)
+      .order("creado_en", { ascending: false });
+    return { data };
+  }, [supabase, sesion?.usuarioId]);
+  if (!sesion || !datos) return <Cargando />;
+  const { data } = datos;
   const subastas = (data ?? []).map((f) => aEstadoSala(f));
   const contar = (...e: string[]) => subastas.filter((s) => e.includes(s.estado)).length;
   const suspendida = !sesion.activo || sesion.tienda?.activa === false;
@@ -72,8 +78,8 @@ export default async function PanelVendedor() {
                       : s.estado === "abierta" ? "En curso" : `Dura ${reloj(s.duracion_seg)}`}</td>
                   <td style={{ textAlign: "right" }}>
                     {s.estado === "cerrada"
-                      ? <Link className="boton boton-secundario" href={`/acta/${s.codigo_sala}`}>Ver acta</Link>
-                      : <Link className="boton boton-secundario" href={`/vendedor/sala/${s.codigo_sala}`}>
+                      ? <Link className="boton boton-secundario" href={`/acta?codigo=${s.codigo_sala}`}>Ver acta</Link>
+                      : <Link className="boton boton-secundario" href={`/vendedor/sala?codigo=${s.codigo_sala}`}>
                           {s.estado === "abierta" ? "Ir a la sala" : "Preparar"}
                         </Link>}
                   </td>

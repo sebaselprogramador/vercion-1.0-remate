@@ -1,15 +1,24 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Navegacion } from "@/components/Navegacion";
-import { requerirRol } from "@/lib/sesion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { Cargando, useRequerirRol, useSesion } from "@/lib/sesion";
+import { useDatos } from "@/lib/useDatos";
 import { FormularioSubasta } from "./FormularioSubasta";
 
-export const dynamic = "force-dynamic";
-
-export default async function NuevaSubasta() {
-  const sesion = await requerirRol(["vendedor"], "/vendedor/nueva");
-  if (!sesion.tienda) redirect("/vendedor/registro");
+export default function NuevaSubasta() {
+  const sesion = useRequerirRol(["vendedor"]);
+  const { supabase } = useSesion();
+  const router = useRouter();
+  const sinTienda = !!sesion && !sesion.tienda;
+  useEffect(() => { if (sinTienda) router.replace("/vendedor/registro"); }, [sinTienda, router]);
+  const { datos } = useDatos(async () => {
+    const { data } = await supabase.from("categorias").select("id, nombre").order("id");
+    return { categorias: data ?? [] };
+  }, [supabase]);
+  if (!sesion || !sesion.tienda || !datos) return <Cargando />;
   if (!sesion.activo || !sesion.tienda.activa) {
     return (
       <main className="contenedor">
@@ -22,13 +31,12 @@ export default async function NuevaSubasta() {
       </main>
     );
   }
-  const supabase = await crearClienteServidor();
-  const { data: categorias } = await supabase.from("categorias").select("id, nombre").order("id");
+  const { categorias } = datos;
 
   return (
     <main className="contenedor">
       <Navegacion activa="/vendedor/nueva" />
-      <FormularioSubasta tiendaId={sesion.tienda.id} categorias={categorias ?? []} />
+      <FormularioSubasta tiendaId={sesion.tienda.id} categorias={categorias} />
     </main>
   );
 }
