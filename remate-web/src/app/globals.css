@@ -340,3 +340,24 @@ textarea.entrada { padding: 12px 14px; min-height: 104px; resize: vertical; }
 /* Enlace con aspecto de texto (¿Olvidaste tu contraseña?) */
 .enlace-texto { align-self: flex-end; border: 0; background: none; padding: 2px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--verde); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .enlace-texto:hover { color: var(--verde-hover); }
+
+/* ── Animación de adjudicación ──────────────────────────── */
+.celebracion { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(12, 26, 19, .82); animation: cel-aparece .3s ease both; overflow: hidden; }
+.celebracion-caja { position: relative; width: 100%; max-width: 380px; background: var(--tinta); color: #f3f4f1; border-radius: 22px; padding: 32px 24px 26px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; border-top: 6px solid var(--arena); box-shadow: 0 30px 80px -20px rgba(0,0,0,.6); animation: cel-sube .45s cubic-bezier(.2,1.2,.4,1) both; }
+.celebracion-martillo { transform-origin: 70% 80%; animation: cel-golpe .7s cubic-bezier(.3,1.6,.5,1) .15s both; }
+.celebracion-golpe { width: 90px; height: 8px; border-radius: 50%; background: var(--arena); opacity: 0; margin-top: -8px; animation: cel-onda .6s ease-out .5s both; }
+.celebracion-titulo { margin: 4px 0 0; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; animation: cel-sube .5s ease .55s both; }
+.celebracion-monto { margin: 0; font-size: 40px; font-weight: 800; color: var(--arena); animation: cel-sube .5s ease .7s both; }
+.celebracion-texto { margin: 0 0 8px; font-size: 15px; color: #a9b8ae; max-width: 30ch; animation: cel-sube .5s ease .8s both; }
+.celebracion .boton-claro { background: transparent; color: #f3f4f1; border: 1.5px solid rgba(243,244,241,.35); }
+.confeti { position: absolute; inset: 0; pointer-events: none; }
+.confeti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: 0; animation-name: cel-confeti; animation-timing-function: linear; animation-iteration-count: 2; }
+@keyframes cel-aparece { from { opacity: 0; } }
+@keyframes cel-sube { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+@keyframes cel-golpe { 0% { transform: rotate(-55deg) translateY(-14px); opacity: 0; } 60% { transform: rotate(8deg); opacity: 1; } 100% { transform: rotate(0); opacity: 1; } }
+@keyframes cel-onda { 0% { opacity: .9; transform: scaleX(.3); } 100% { opacity: 0; transform: scaleX(1.6); } }
+@keyframes cel-confeti { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: .9; transform: translateY(105vh) rotate(540deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .celebracion, .celebracion-caja, .celebracion-martillo, .celebracion-golpe, .celebracion-titulo, .celebracion-monto, .celebracion-texto { animation: none; }
+  .confeti { display: none; }
+}

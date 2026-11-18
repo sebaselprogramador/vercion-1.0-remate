@@ -3,6 +3,8 @@ import type { EstadoSubasta } from "./formato";
 
 /** Estado de una sala. Tiene la misma forma que el evento "estado" que emite el servidor (remate-api). */
 export interface EstadoSala {
+  /** Id de la subasta (para escuchar sus pujas en tiempo real). */
+  id: string;
   codigo_sala: string;
   estado: EstadoSubasta;
   precio_inicial: string;
@@ -31,7 +33,7 @@ export interface EstadoSala {
 type Uno<T> = T | T[] | null;
 const uno = <T,>(v: Uno<T>): T | null => (Array.isArray(v) ? v[0] ?? null : v);
 
-const SELECCION = `codigo_sala, estado, precio_inicial, incremento_minimo, duracion_seg, cierra_en, oferta_vigente, total_pujas,
+const SELECCION = `id, codigo_sala, estado, precio_inicial, incremento_minimo, duracion_seg, cierra_en, oferta_vigente, total_pujas,
   productos!inner(titulo, descripcion, imagen_url, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id, activa)),
   postor:perfiles!subastas_postor_vigente_id_fkey(nombre_visible),
   adjudicaciones(monto, ganador:perfiles!adjudicaciones_ganador_id_fkey(nombre_visible))`;
@@ -41,6 +43,7 @@ export function aEstadoSala(f: any, pujas: any[] = []): EstadoSala {
   const p = uno<any>(f.productos);
   const adj = uno<any>(f.adjudicaciones);
   return {
+    id: f.id,
     codigo_sala: f.codigo_sala,
     estado: f.estado,
     precio_inicial: String(f.precio_inicial),

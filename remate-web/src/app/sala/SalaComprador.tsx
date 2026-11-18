@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Logotipo } from "@/components/Logo";
 import { FotoProducto } from "@/components/FotoProducto";
@@ -8,8 +8,9 @@ import { EstadoChip } from "@/components/EstadoChip";
 import { bs, reloj, sumarMontos } from "@/lib/formato";
 import { Hace } from "@/components/Hace";
 import type { EstadoSala } from "@/lib/salas";
-import { useSala, useSegundosRestantes } from "@/lib/useSala";
-import { crearClienteSupabase } from "@/lib/supabase/cliente";
+import { mensajeRechazo, useSala, useSegundosRestantes } from "@/lib/useSala";
+import { useSesion } from "@/lib/sesion";
+import { CelebracionAdjudicacion } from "@/components/CelebracionAdjudicacion";
 
 /** Estados de la última oferta propia (coinciden con la propuesta "Qué ocurre después de ofertar"). */
 type MiOferta =
@@ -22,14 +23,15 @@ const textoConexion = {
   conectando: "Conectando…",
   conectado: "Conectado",
   reconectando: "Reconectando…",
-  sin_servidor: "Servidor de subastas no disponible",
+  sin_servidor: "Sin conexión en vivo",
 } as const;
 
 export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSala, cuentaSuspendida, tiendaSuspendida }: {
   inicial: EstadoSala; conSesion: boolean; usuarioId: string | null; esVendedorDeLaSala: boolean;
   cuentaSuspendida: boolean; tiendaSuspendida: boolean;
 }) {
-  const { estado: s, conexion, desfaseMs, misSolicitudes, socketRef } = useSala(inicial);
+  const { estado: s, conexion, desfaseMs, pujar } = useSala(inicial);
+  const { supabase } = useSesion();
   const restante = useSegundosRestantes(s.cierra_en, desfaseMs);
   const [mia, setMia] = useState<MiOferta | null>(null);
 
@@ -37,34 +39,19 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
   const [monto, setMonto] = useState(minimo);
   useEffect(() => setMonto(minimo), [minimo]);
 
-  // Tras reconectarse, resuelve una oferta que había quedado sin confirmar con el registro del servidor.
-  useEffect(() => {
-    if (!mia || (mia.fase !== "sin_confirmar" && mia.fase !== "enviando")) return;
-    const registrada = misSolicitudes.find((x) => x.id_solicitud === mia.id);
-    if (registrada) {
-      setMia(registrada.resultado === "aceptada"
-        ? { fase: "aceptada", id: mia.id, monto: mia.monto, mensaje: "Tu oferta quedó registrada." }
-        : { fase: "rechazada", id: mia.id, monto: mia.monto, mensaje: "Tu oferta no fue aceptada." });
-    }
-  }, [misSolicitudes, mia]);
-
-  function enviar(id: string, valor: string) {
-    const socket = socketRef.current;
+  /** Envía la puja a la base. Si no llega respuesta, se puede reintentar con el mismo id sin duplicarla. */
+  async function enviar(id: string, valor: string) {
     setMia({ fase: "enviando", id, monto: valor });
-    if (!socket?.connected) {
-      setMia({ fase: "sin_confirmar", id, monto: valor });
-      return;
+    const { resultado, error } = await pujar(id, valor);
+    if (error) {
+      const sinRed = /fetch|network|load failed|timeout/i.test(error.message);
+      setMia(sinRed ? { fase: "sin_confirmar", id, monto: valor }
+        : { fase: "rechazada", id, monto: valor, mensaje: traducirError(error.message) });
+    } else if (resultado?.resultado === "aceptada") {
+      setMia({ fase: "aceptada", id, monto: valor, mensaje: "Tu oferta quedó registrada." });
+    } else {
+      setMia({ fase: "rechazada", id, monto: valor, mensaje: traducirError(resultado?.motivo ?? undefined) });
     }
-    socket.timeout(8000).emit("pujar", { codigo: s.codigo_sala, idSolicitud: id, monto: valor },
-      (err: unknown, r: { ok: boolean; resultado?: string; mensaje?: string; error?: string }) => {
-        if (err || !r || (!r.ok && r.error === "resultado_no_confirmado")) {
-          setMia({ fase: "sin_confirmar", id, monto: valor });
-        } else if (r.ok && r.resultado === "aceptada") {
-          setMia({ fase: "aceptada", id, monto: valor, mensaje: r.mensaje ?? "Tu oferta quedó registrada." });
-        } else {
-          setMia({ fase: "rechazada", id, monto: valor, mensaje: r.mensaje ?? traducirError(r.error) });
-        }
-      });
   }
 
   // Al cerrar, comprueba si la adjudicación es de esta cuenta para ofrecer el acta.
@@ -72,11 +59,20 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
   useEffect(() => {
     if (s.estado !== "cerrada" || !usuarioId || !s.ganador) return;
     let vigente = true;
-    crearClienteSupabase().from("adjudicaciones").select("ganador_id, subastas!inner(codigo_sala)")
+    supabase.from("adjudicaciones").select("ganador_id, subastas!inner(codigo_sala)")
       .eq("subastas.codigo_sala", s.codigo_sala).maybeSingle()
       .then(({ data }) => { if (vigente) setGane(data?.ganador_id === usuarioId); });
     return () => { vigente = false; };
-  }, [s.estado, s.ganador, s.codigo_sala, usuarioId]);
+  }, [s.estado, s.ganador, s.codigo_sala, usuarioId, supabase]);
+
+  // Animación cuando la subasta se cierra con la sala abierta en pantalla.
+  const estadoAnterior = useRef(s.estado);
+  const [celebrar, setCelebrar] = useState(false);
+  useEffect(() => {
+    if (estadoAnterior.current === "abierta" && s.estado === "cerrada") setCelebrar(true);
+    estadoAnterior.current = s.estado;
+  }, [s.estado]);
+  const cerrarCelebracion = useCallback(() => setCelebrar(false), []);
 
   const abierta = s.estado === "abierta" && (restante == null || restante > 0);
   const puedeOfertar = abierta && conSesion && !esVendedorDeLaSala && !cuentaSuspendida && !tiendaSuspendida
@@ -84,6 +80,10 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
 
   return (
     <main className="marco-movil pila" style={{ gap: 16 }}>
+      {celebrar && (
+        <CelebracionAdjudicacion esGanador={gane} ganador={s.ganador} monto={s.monto_ganador}
+          producto={s.producto} onCerrar={cerrarCelebracion} />
+      )}
       <header className="fila entre">
         <Link href="/" className="marca" aria-label="Remate, inicio"><Logotipo ancho={96} /></Link>
         <span className="texto-chico codigo">Sala {s.codigo_sala}</span>
@@ -151,7 +151,7 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
       )}
 
       {!conSesion && s.estado === "abierta" ? (
-        <Link className="boton boton-bloque" href={`/ingresar?volver=/sala/${s.codigo_sala}`}>Ingresa para ofertar</Link>
+        <Link className="boton boton-bloque" href={`/ingresar?volver=${encodeURIComponent(`/sala?codigo=${s.codigo_sala}`)}`}>Ingresa para ofertar</Link>
       ) : esVendedorDeLaSala ? (
         <p className="aviso">Esta es tu subasta: no puedes pujar en ella.</p>
       ) : cuentaSuspendida ? (
@@ -185,10 +185,6 @@ function EstadoMiOferta({ mia, onReintentar }: { mia: MiOferta; onReintentar: ()
 }
 
 function traducirError(e?: string) {
-  const m: Record<string, string> = {
-    sesion_requerida: "Ingresa con tu cuenta para ofertar.",
-    demasiadas_solicitudes: "Estás enviando ofertas muy rápido. Espera un momento.",
-    monto_invalido: "El monto no es válido. Usa hasta dos decimales.",
-  };
-  return (e && m[e]) || "La puja no fue aceptada.";
+  if (e && /sesion_requerida/.test(e)) return "Ingresa con tu cuenta para ofertar.";
+  return (e && mensajeRechazo[e]) || "La puja no fue aceptada.";
 }

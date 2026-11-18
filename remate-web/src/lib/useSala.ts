@@ -1,84 +1,103 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { io, type Socket } from "socket.io-client";
-import { crearClienteSupabase } from "@/lib/supabase/cliente";
-import { API_URL } from "@/lib/formato";
-import type { EstadoSala } from "@/lib/salas";
+import { useCallback, useEffect, useState } from "react";
+import { cargarSala, type EstadoSala } from "@/lib/salas";
+import { useSesion } from "@/lib/sesion";
 
 export type Conexion = "conectando" | "conectado" | "reconectando" | "sin_servidor";
 
-export interface SolicitudPropia {
-  id_solicitud: string;
-  monto: string;
+/** Resultado de la función pujar() de la base (tipo resultado_puja). */
+export interface ResultadoPuja {
   resultado: "aceptada" | "rechazada";
   motivo: string | null;
+  orden: number | null;
+  oferta_vigente: string | null;
+  cierra_en: string | null;
+  total_pujas: number | null;
+  repetida: boolean;
 }
 
+/** Mensajes para quien puja según el motivo de rechazo que registra la base. */
+export const mensajeRechazo: Record<string, string> = {
+  sala_inexistente: "No encontramos esa sala.",
+  subasta_no_abierta: "La subasta no está abierta.",
+  plazo_vencido: "El tiempo de la subasta terminó antes de recibir tu oferta.",
+  tienda_suspendida: "La tienda está suspendida: esta sala no acepta pujas.",
+  cuenta_suspendida: "Tu cuenta está suspendida: no puedes pujar.",
+  vendedor_no_puede_pujar: "No puedes pujar por tus propios productos.",
+  monto_invalido: "El monto no es válido. Usa hasta dos decimales.",
+  monto_insuficiente: "Otra persona ofertó antes o el monto no alcanza el mínimo.",
+  demasiadas_solicitudes: "Estás enviando ofertas muy rápido. Espera un momento.",
+};
+
 /**
- * Conecta la sala al servidor de subastas (Socket.IO).
- * Al conectarse y al reconectarse pide el estado registrado, así se recupera lo ocurrido durante una desconexión.
+ * Sala en tiempo real con Supabase: la base publica cada cambio de la subasta y cada puja aceptada
+ * (Realtime), y la sala vuelve a leer su estado. Las pujas se registran con la función pujar() de la base,
+ * que decide con su propio reloj y su bloqueo; la app solo muestra lo que la base confirmó.
  */
 export function useSala(inicial: EstadoSala) {
+  const { supabase } = useSesion();
   const [estado, setEstado] = useState(inicial);
   const [conexion, setConexion] = useState<Conexion>("conectando");
   const [desfaseMs, setDesfaseMs] = useState(0);
-  const [misSolicitudes, setMisSolicitudes] = useState<SolicitudPropia[]>([]);
-  const socketRef = useRef<Socket | null>(null);
+  const codigo = inicial.codigo_sala;
 
   // Si la página vuelve a cargar los datos (por ejemplo tras abrir la sala), se adopta el estado nuevo.
   useEffect(() => setEstado(inicial), [inicial]);
 
+  const recargar = useCallback(async () => {
+    const s = await cargarSala(supabase, codigo);
+    if (s) setEstado(s);
+  }, [supabase, codigo]);
+
+  // Hora de la base: la cuenta regresiva se ajusta a ella, no al reloj del teléfono.
   useEffect(() => {
-    let cancelado = false;
-    let socket: Socket | null = null;
+    const antes = Date.now();
+    supabase.rpc("hora_servidor").then(({ data }) => {
+      if (data) setDesfaseMs(new Date(data as string).getTime() - (antes + Date.now()) / 2);
+    });
+  }, [supabase]);
 
-    (async () => {
-      const { data } = await crearClienteSupabase().auth.getSession();
-      if (cancelado) return;
-      socket = io(`${API_URL}/salas`, {
-        auth: data.session ? { token: data.session.access_token } : {},
-        reconnectionDelayMax: 5000,
-        timeout: 5000,
+  useEffect(() => {
+    const canal = supabase
+      .channel(`sala-${codigo}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "subastas", filter: `codigo_sala=eq.${codigo}` }, () => void recargar())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "pujas", filter: `subasta_id=eq.${inicial.id}` }, () => void recargar())
+      .subscribe((estadoCanal) => {
+        if (estadoCanal === "SUBSCRIBED") {
+          setConexion("conectado");
+          void recargar(); // recupera lo ocurrido mientras no hubo conexión
+        } else if (estadoCanal === "CHANNEL_ERROR" || estadoCanal === "TIMED_OUT") {
+          setConexion("reconectando");
+        } else if (estadoCanal === "CLOSED") {
+          setConexion("sin_servidor");
+        }
       });
-      socketRef.current = socket;
+    return () => { void supabase.removeChannel(canal); };
+  }, [supabase, codigo, inicial.id, recargar]);
 
-      const unirse = () =>
-        socket!.timeout(8000).emit("unirse", { codigo: inicial.codigo_sala }, (err: unknown, r: {
-          ok: boolean; estado?: EstadoSala; mis_solicitudes?: SolicitudPropia[];
-        }) => {
-          if (err || !r?.ok || !r.estado) return;
-          setEstado(r.estado);
-          if (r.estado.hora_servidor) setDesfaseMs(new Date(r.estado.hora_servidor).getTime() - Date.now());
-          setMisSolicitudes(r.mis_solicitudes ?? []);
-        });
+  // Al vencer el plazo, la base cierra la subasta en pocos segundos; se vuelve a leer por si el aviso se demora.
+  useEffect(() => {
+    if (estado.estado !== "abierta" || !estado.cierra_en) return;
+    const espera = new Date(estado.cierra_en).getTime() - (Date.now() + desfaseMs) + 3000;
+    const t = setTimeout(() => void recargar(), Math.max(1000, espera));
+    return () => clearTimeout(t);
+  }, [estado.estado, estado.cierra_en, desfaseMs, recargar]);
 
-      socket.on("connect", () => { setConexion("conectado"); unirse(); });
-      socket.on("disconnect", () => setConexion("reconectando"));
-      socket.on("connect_error", () => setConexion(socket?.active ? "reconectando" : "sin_servidor"));
-      socket.io.on("reconnect_failed", () => setConexion("sin_servidor"));
-      socket.on("estado", (e: EstadoSala) => {
-        setEstado(e);
-        if (e.hora_servidor) setDesfaseMs(new Date(e.hora_servidor).getTime() - Date.now());
-      });
-      // Si tras unos segundos no hay conexión, se informa que el servidor no está disponible.
-      setTimeout(() => { if (!cancelado && !socket?.connected) setConexion("sin_servidor"); }, 6000);
-    })();
+  /** Registra una puja. Reintentar con el mismo id devuelve el resultado ya registrado (no duplica). */
+  const pujar = useCallback(async (idSolicitud: string, monto: string) => {
+    const { data, error } = await supabase.rpc("pujar", { p_id_solicitud: idSolicitud, p_codigo_sala: codigo, p_monto: monto });
+    if (!error) void recargar();
+    return { resultado: (data as ResultadoPuja | null) ?? null, error };
+  }, [supabase, codigo, recargar]);
 
-    return () => {
-      cancelado = true;
-      socket?.disconnect();
-      socketRef.current = null;
-    };
-  }, [inicial.codigo_sala]);
-
-  return { estado, conexion, desfaseMs, misSolicitudes, socketRef };
+  return { estado, conexion, desfaseMs, pujar, recargar };
 }
 
-/** Segundos restantes según la hora del servidor. Es solo informativo: el cierre lo decide el servidor. */
+/** Segundos restantes según la hora de la base. Es solo informativo: el cierre lo decide la base. */
 export function useSegundosRestantes(cierraEn: string | null, desfaseMs: number): number | null {
   const calcular = () => (cierraEn ? Math.max(0, (new Date(cierraEn).getTime() - (Date.now() + desfaseMs)) / 1000) : 0);
-  // null hasta montar en el navegador: el servidor no conoce la hora del visitante.
+  // null hasta montar en el navegador: la hora del visitante solo existe en su navegador.
   const [seg, setSeg] = useState<number | null>(null);
   useEffect(() => {
     setSeg(calcular());

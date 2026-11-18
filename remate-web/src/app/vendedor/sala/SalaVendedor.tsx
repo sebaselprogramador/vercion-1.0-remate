@@ -1,22 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Logotipo } from "@/components/Logo";
 import { FotoProducto } from "@/components/FotoProducto";
 import { EstadoChip } from "@/components/EstadoChip";
-import { API_URL, bs, reloj, sumarMontos } from "@/lib/formato";
+import { bs, reloj, sumarMontos } from "@/lib/formato";
 import { Hace } from "@/components/Hace";
 import type { EstadoSala } from "@/lib/salas";
-import { crearClienteSupabase } from "@/lib/supabase/cliente";
+import { useSesion } from "@/lib/sesion";
 import { useSala, useSegundosRestantes } from "@/lib/useSala";
+import { CelebracionAdjudicacion } from "@/components/CelebracionAdjudicacion";
 
 /**
  * Sala del vendedor, pensada para el teléfono durante el live.
- * El contador es informativo: el cierre real lo decide el servidor con el vencimiento guardado.
+ * El contador es informativo: el cierre real lo hace la base de datos con el vencimiento guardado.
  */
 export function SalaVendedor({ inicial, suspendida, onCambio }: { inicial: EstadoSala; suspendida: boolean; onCambio: () => void }) {
-  const { estado: s, conexion, desfaseMs } = useSala(inicial);
+  const { estado: s, conexion, desfaseMs, recargar } = useSala(inicial);
+  const { supabase } = useSesion();
+
+  // Animación de adjudicación cuando la subasta se cierra con la sala en pantalla.
+  const estadoAnterior = useRef(s.estado);
+  const [celebrar, setCelebrar] = useState(false);
+  useEffect(() => {
+    if (estadoAnterior.current === "abierta" && s.estado === "cerrada") setCelebrar(true);
+    estadoAnterior.current = s.estado;
+  }, [s.estado]);
+  const cerrarCelebracion = useCallback(() => setCelebrar(false), []);
   const restante = useSegundosRestantes(s.cierra_en, desfaseMs);
   const [copiado, setCopiado] = useState<"codigo" | "enlace" | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -35,7 +46,7 @@ export function SalaVendedor({ inicial, suspendida, onCambio }: { inicial: Estad
 
   async function marcarLista() {
     setOcupado(true);
-    const { error } = await crearClienteSupabase().from("subastas").update({ estado: "programada" }).eq("codigo_sala", s.codigo_sala);
+    const { error } = await supabase.from("subastas").update({ estado: "programada" }).eq("codigo_sala", s.codigo_sala);
     setOcupado(false);
     if (error) return setAviso("No se pudo actualizar la subasta.");
     onCambio();
@@ -44,32 +55,28 @@ export function SalaVendedor({ inicial, suspendida, onCambio }: { inicial: Estad
   async function abrir() {
     setOcupado(true);
     setAviso(null);
-    try {
-      const { data } = await crearClienteSupabase().auth.getSession();
-      const r = await fetch(`${API_URL}/vendedor/salas/${s.codigo_sala}/abrir`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
-      });
-      if (r.status === 403) {
-        const cuerpo = (await r.json().catch(() => null)) as { message?: string } | null;
-        setAviso(cuerpo?.message === "cuenta_suspendida"
-          ? "Tu cuenta está suspendida por administración: no puedes abrir salas."
-          : "Tu tienda está suspendida por administración: no puedes abrir salas.");
-        return;
-      }
-      if (!r.ok) throw new Error(String(r.status));
-      onCambio();
-    } catch {
-      setAviso("No se pudo abrir la sala: el servidor de subastas no respondió. Verifica que esté en marcha.");
-    } finally {
-      setOcupado(false);
+    // La base abre la sala y fija el vencimiento con su propio reloj.
+    const { error } = await supabase.rpc("abrir_mi_subasta", { p_codigo_sala: s.codigo_sala });
+    setOcupado(false);
+    if (error) {
+      setAviso(/cuenta_suspendida/.test(error.message) ? "Tu cuenta está suspendida por administración: no puedes abrir salas."
+        : /tienda_suspendida/.test(error.message) ? "Tu tienda está suspendida por administración: no puedes abrir salas."
+        : /fetch|network|load failed/i.test(error.message) ? "No se pudo abrir la sala: revisa tu conexión a internet."
+        : "No se pudo abrir la sala. Inténtalo de nuevo.");
+      return;
     }
+    await recargar();
+    onCambio();
   }
 
   const siguiente = s.oferta_vigente != null ? sumarMontos(s.oferta_vigente, s.incremento_minimo) : s.precio_inicial;
 
   return (
     <main className="marco-movil pila" style={{ gap: 16 }}>
+      {celebrar && (
+        <CelebracionAdjudicacion esGanador={false} ganador={s.ganador} monto={s.monto_ganador}
+          producto={s.producto} onCerrar={cerrarCelebracion} />
+      )}
       <header className="fila entre">
         <Link href="/vendedor" className="marca" aria-label="Remate, inicio"><Logotipo ancho={96} /></Link>
         <span className="texto-chico">Panel del vendedor</span>
@@ -79,7 +86,7 @@ export function SalaVendedor({ inicial, suspendida, onCambio }: { inicial: Estad
         <EstadoChip estado={s.estado} />
         {s.estado !== "borrador" && (
           <span className="texto-chico" role="status">
-            {conexion === "conectado" ? "Conectado" : conexion === "sin_servidor" ? "Servidor de subastas no disponible" : "Conectando…"}
+            {conexion === "conectado" ? "Conectado" : conexion === "sin_servidor" ? "Sin conexión en vivo" : "Conectando…"}
           </span>
         )}
       </div>

@@ -41,4 +41,3 @@ export function hace(fechaIso: string, ahora: number = Date.now()) {
   return new Date(fechaIso).toLocaleDateString("es-BO");
 }
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
