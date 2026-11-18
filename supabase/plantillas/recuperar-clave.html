@@ -1,0 +1,39 @@
+<!--
+  Remate — correo "Reset password" de Supabase Auth.
+  Dónde se pega: Supabase > Authentication > Emails (Email Templates) > Reset password > Body (modo Source/HTML).
+  Asunto sugerido: Crea una contraseña nueva para Remate
+  {{ .RedirectTo }} es la página /nueva-clave/ de la app (la envía el login al pedir el enlace).
+  El enlace usa token_hash: funciona aunque la persona abra el correo en otro dispositivo.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f1;padding:32px 12px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #dfe3dc;border-radius:16px;">
+        <tr>
+          <td align="center" style="padding:32px 32px 8px;">
+            <img src="https://sebaselprogramador.github.io/vercion-1.0-remate/correo/remate-logo.png" width="180" alt="Remate" style="display:block;width:180px;height:auto;border:0;">
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 32px;">
+            <h1 style="margin:0 0 12px;font-size:22px;color:#12241b;">Recupera tu contraseña</h1>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3c4d43;">
+              Recibimos un pedido para cambiar la contraseña de tu cuenta de <strong>Remate</strong> ({{ .Email }}).
+            </p>
+            <p style="margin:0;font-size:15px;line-height:1.6;color:#3c4d43;">
+              Para crear una contraseña nueva, abre este enlace:<br>
+              <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery" style="color:#1d5a42;font-weight:bold;word-break:break-all;">Crear mi contraseña nueva</a>
+            </p>
+            <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#66756c;">El enlace vence en una hora y solo sirve una vez.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="border-top:1px solid #dfe3dc;padding:20px 32px;font-size:12px;line-height:1.6;color:#66756c;">
+            Si no pediste este cambio, ignora este correo: tu contraseña actual sigue funcionando.<br>
+            Remate es un proyecto académico de Ingeniería de Sistemas, Universidad Privada Franz Tamayo.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

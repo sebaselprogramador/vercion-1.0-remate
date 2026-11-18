@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Logotipo } from "@/components/Logo";
 import { useSesion } from "@/lib/sesion";
 
-type Modo = "ingresar" | "registrarse";
+type Modo = "ingresar" | "registrarse" | "recuperar";
 
 /** Página a la que volver tras ingresar (solo rutas internas). Sin destino, cada rol va a su sección. */
 export function destinoSeguro() {
@@ -48,6 +48,16 @@ export function FormularioIngreso() {
     setAviso(null);
     setCargando(true);
     try {
+      if (modo === "recuperar") {
+        // Supabase envía un enlace que lleva a /nueva-clave/, donde se elige la contraseña nueva.
+        const { error } = await supabase.auth.resetPasswordForEmail(correo.trim(), {
+          redirectTo: `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/nueva-clave/`,
+        });
+        if (error) throw error;
+        // El mismo aviso exista o no la cuenta: no revela qué correos están registrados.
+        setAviso("Si existe una cuenta con ese correo, te enviamos un enlace para crear una contraseña nueva. Revisa tu bandeja de entrada y la carpeta de spam.");
+        return;
+      }
       if (modo === "registrarse") {
         const { data, error } = await supabase.auth.signUp({
           email: correo.trim(),
@@ -94,12 +104,16 @@ export function FormularioIngreso() {
       <section className="ingreso-panel">
         <form className="ingreso-caja" onSubmit={enviar}>
           <h1 className="titulo-seccion" style={{ fontSize: 30 }}>
-            {modo === "ingresar" ? "Ingresa a tu cuenta" : "Crea tu cuenta"}
+            {modo === "ingresar" ? "Ingresa a tu cuenta" : modo === "registrarse" ? "Crea tu cuenta" : "Recupera tu contraseña"}
           </h1>
-          <div className="ingreso-pestanas" role="tablist" aria-label="Ingresar o crear cuenta">
-            <button type="button" role="tab" aria-selected={modo === "ingresar"} onClick={() => cambiarModo("ingresar")}>Ingresar</button>
-            <button type="button" role="tab" aria-selected={modo === "registrarse"} onClick={() => cambiarModo("registrarse")}>Crear cuenta</button>
-          </div>
+          {modo === "recuperar" ? (
+            <p className="texto-tenue">Escribe el correo de tu cuenta y te enviaremos un enlace para crear una contraseña nueva.</p>
+          ) : (
+            <div className="ingreso-pestanas" role="tablist" aria-label="Ingresar o crear cuenta">
+              <button type="button" role="tab" aria-selected={modo === "ingresar"} onClick={() => cambiarModo("ingresar")}>Ingresar</button>
+              <button type="button" role="tab" aria-selected={modo === "registrarse"} onClick={() => cambiarModo("registrarse")}>Crear cuenta</button>
+            </div>
+          )}
 
           {modo === "registrarse" && (
             <div className="campo">
@@ -113,20 +127,28 @@ export function FormularioIngreso() {
             <input id="correo" type="email" autoComplete="email" className="entrada" value={correo}
               onChange={(e) => setCorreo(e.target.value)} required />
           </div>
-          <div className="campo">
-            <label htmlFor="clave">Contraseña</label>
-            <input id="clave" type="password" className="entrada" value={clave} onChange={(e) => setClave(e.target.value)}
-              autoComplete={modo === "ingresar" ? "current-password" : "new-password"} required minLength={6} />
-          </div>
+          {modo !== "recuperar" && (
+            <div className="campo">
+              <label htmlFor="clave">Contraseña</label>
+              <input id="clave" type="password" className="entrada" value={clave} onChange={(e) => setClave(e.target.value)}
+                autoComplete={modo === "ingresar" ? "current-password" : "new-password"} required minLength={6} />
+              {modo === "ingresar" && (
+                <button type="button" className="enlace-texto" onClick={() => cambiarModo("recuperar")}>¿Olvidaste tu contraseña?</button>
+              )}
+            </div>
+          )}
 
           {error && <p className="aviso aviso-alerta" role="alert">{error}</p>}
           {aviso && <p className="aviso" role="status">{aviso}</p>}
 
           <button className="boton boton-bloque" disabled={cargando}>
-            {cargando ? "Un momento…" : modo === "ingresar" ? "Ingresar" : "Crear cuenta"}
+            {cargando ? "Un momento…" : modo === "ingresar" ? "Ingresar" : modo === "registrarse" ? "Crear cuenta" : "Enviar enlace"}
           </button>
+          {modo === "recuperar" && (
+            <button type="button" className="enlace-texto" style={{ alignSelf: "center" }} onClick={() => cambiarModo("ingresar")}>Volver a ingresar</button>
+          )}
           <p className="texto-chico">
-            {modo === "registrarse"
+            {modo === "recuperar" ? "El enlace vence en una hora y solo sirve una vez." : modo === "registrarse"
               ? "Tu cuenta empieza como comprador: puedes pujar en cualquier sala. Si registras una tienda, también podrás vender."
               : "Una cuenta identifica a quien puja; no verifica documentos de identidad."}
           </p>

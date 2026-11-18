@@ -336,3 +336,7 @@ textarea.entrada { padding: 12px 14px; min-height: 104px; resize: vertical; }
 .confirmado { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: var(--fondo); }
 .confirmado-caja { width: 100%; max-width: 420px; background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio-l); padding: 36px 28px; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
 .confirmado-sello { width: 64px; height: 64px; border-radius: 50%; background: var(--verde-suave); color: var(--verde); display: grid; place-items: center; }
+
+/* Enlace con aspecto de texto (¿Olvidaste tu contraseña?) */
+.enlace-texto { align-self: flex-end; border: 0; background: none; padding: 2px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--verde); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.enlace-texto:hover { color: var(--verde-hover); }

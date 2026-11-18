@@ -18,7 +18,7 @@ export interface Sesion {
 }
 
 /** Páginas que se pueden abrir sin sesión. Todo lo demás lleva primero al login. */
-const RUTAS_PUBLICAS = ["/ingresar", "/confirmado"];
+const RUTAS_PUBLICAS = ["/ingresar", "/confirmado", "/nueva-clave"];
 
 /** Lee la cuenta, su perfil y su tienda. Las políticas por fila (RLS) deciden qué devuelve la base. */
 async function leerSesion(supabase: SupabaseClient): Promise<Sesion | null> {
