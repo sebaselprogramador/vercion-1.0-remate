@@ -13,6 +13,8 @@ export interface EstadoSala {
   total_pujas: number;
   producto: string;
   descripcion: string | null;
+  /** Foto subida por el vendedor (Supabase Storage), o null. */
+  imagen_url?: string | null;
   categoria: string | null;
   tienda: string;
   ciudad: string;
@@ -30,7 +32,7 @@ type Uno<T> = T | T[] | null;
 const uno = <T,>(v: Uno<T>): T | null => (Array.isArray(v) ? v[0] ?? null : v);
 
 const SELECCION = `codigo_sala, estado, precio_inicial, incremento_minimo, duracion_seg, cierra_en, oferta_vigente, total_pujas,
-  productos!inner(titulo, descripcion, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id, activa)),
+  productos!inner(titulo, descripcion, imagen_url, categorias(nombre), tiendas!inner(nombre, ciudad, vendedor_id, activa)),
   postor:perfiles!subastas_postor_vigente_id_fkey(nombre_visible),
   adjudicaciones(monto, ganador:perfiles!adjudicaciones_ganador_id_fkey(nombre_visible))`;
 
@@ -49,6 +51,7 @@ export function aEstadoSala(f: any, pujas: any[] = []): EstadoSala {
     total_pujas: f.total_pujas,
     producto: p?.titulo ?? "",
     descripcion: p?.descripcion ?? null,
+    imagen_url: p?.imagen_url ?? null,
     categoria: uno<any>(p?.categorias)?.nombre ?? null,
     tienda: uno<any>(p?.tiendas)?.nombre ?? "",
     ciudad: uno<any>(p?.tiendas)?.ciudad ?? "",

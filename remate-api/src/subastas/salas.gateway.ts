@@ -16,7 +16,7 @@ const sala = (codigo: string) => `sala:${codigo}`;
  * eso lo hace la función transaccional de PostgreSQL. El aviso de aceptación se envía
  * después de que la base confirma el registro.
  */
-@WebSocketGateway({ namespace: '/salas', cors: { origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000' } })
+@WebSocketGateway({ namespace: '/salas', cors: { origin: (process.env.WEB_ORIGIN ?? 'http://localhost:3000').split(',').map((o) => o.trim()) } })
 export class SalasGateway implements OnGatewayConnection {
   @WebSocketServer() servidor!: Server;
   private readonly log = new Logger('Salas');

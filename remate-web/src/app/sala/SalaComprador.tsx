@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logotipo } from "@/components/Logo";
-import { Ilustracion, ilustracionDeCategoria } from "@/components/Ilustracion";
+import { FotoProducto } from "@/components/FotoProducto";
 import { EstadoChip } from "@/components/EstadoChip";
 import { bs, reloj, sumarMontos } from "@/lib/formato";
 import { Hace } from "@/components/Hace";
@@ -93,11 +93,12 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
         <span className="texto-chico" role="status">{textoConexion[conexion]}</span>
       </div>
 
-      <Ilustracion tipo={ilustracionDeCategoria(s.categoria)} alto={200} />
+      <FotoProducto url={s.imagen_url} categoria={s.categoria} alto={240} alt={s.producto} />
       <div className="pila" style={{ gap: 4 }}>
         <h1 className="titulo-tarjeta" style={{ fontSize: 26 }}>{s.producto}</h1>
         <span className="texto-tenue">{s.tienda} · {s.ciudad}</span>
       </div>
+      {s.descripcion && <p className="descripcion-producto">{s.descripcion}</p>}
 
       {s.estado === "cerrada" ? (
         <section className="bloque-destacado pila" style={{ gap: 6 }}>

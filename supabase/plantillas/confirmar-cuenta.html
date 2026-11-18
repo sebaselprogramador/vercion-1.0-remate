@@ -1,0 +1,39 @@
+<!--
+  Remate — correo "Confirm signup" de Supabase Auth.
+  Dónde se pega: Supabase > Authentication > Emails (Email Templates) > Confirm signup > Body (modo Source/HTML).
+  Asunto sugerido: Confirma tu cuenta en Remate
+  Variables de Supabase: {{ .ConfirmationURL }} (enlace de confirmación), {{ .Email }}, {{ .Data.nombre_visible }} (nombre que puso al registrarse).
+  El logo se carga desde GitHub Pages (remate-web/public/correo/remate-logo.png): debe estar publicado.
+  Al abrir el enlace, la persona llega a la página /confirmado: "Tu correo ha sido confirmado. Ya puedes cerrar esta pestaña."
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f1;padding:32px 12px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #dfe3dc;border-radius:16px;">
+        <tr>
+          <td align="center" style="padding:32px 32px 8px;">
+            <img src="https://sebaselprogramador.github.io/vercion-1.0-remate/correo/remate-logo.png" width="180" alt="Remate" style="display:block;width:180px;height:auto;border:0;">
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px 32px 32px;">
+            <h1 style="margin:0 0 12px;font-size:22px;color:#12241b;">¡Hola{{ if .Data.nombre_visible }}, {{ .Data.nombre_visible }}{{ end }}!</h1>
+            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3c4d43;">
+              Gracias por crear tu cuenta en <strong>Remate</strong>. Con ella podrás pujar en las salas que las tiendas abren durante sus lives de TikTok y, si registras tu tienda, también subastar tus productos.
+            </p>
+            <p style="margin:0;font-size:15px;line-height:1.6;color:#3c4d43;">
+              Para confirmar tu correo, abre este enlace:<br>
+              <a href="{{ .ConfirmationURL }}" style="color:#1d5a42;font-weight:bold;word-break:break-all;">Confirmar mi correo en Remate</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="border-top:1px solid #dfe3dc;padding:20px 32px;font-size:12px;line-height:1.6;color:#66756c;">
+            Recibiste este correo porque se registró la cuenta {{ .Email }} en Remate. Si no fuiste tú, ignóralo: la cuenta no se activará.<br>
+            Remate es un proyecto académico de Ingeniería de Sistemas, Universidad Privada Franz Tamayo.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

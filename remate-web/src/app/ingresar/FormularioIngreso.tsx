@@ -52,7 +52,11 @@ export function FormularioIngreso() {
         const { data, error } = await supabase.auth.signUp({
           email: correo.trim(),
           password: clave,
-          options: { data: { nombre_visible: nombre.trim() } },
+          options: {
+            data: { nombre_visible: nombre.trim() },
+            // El enlace del correo lleva a la página "Tu correo ha sido confirmado".
+            emailRedirectTo: `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/confirmado/`,
+          },
         });
         if (error) throw error;
         if (!data.session) {

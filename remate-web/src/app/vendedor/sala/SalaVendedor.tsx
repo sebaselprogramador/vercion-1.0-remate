@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Logotipo } from "@/components/Logo";
-import { Ilustracion, ilustracionDeCategoria } from "@/components/Ilustracion";
+import { FotoProducto } from "@/components/FotoProducto";
 import { EstadoChip } from "@/components/EstadoChip";
 import { API_URL, bs, reloj, sumarMontos } from "@/lib/formato";
 import { Hace } from "@/components/Hace";
@@ -95,12 +95,13 @@ export function SalaVendedor({ inicial, suspendida, onCambio }: { inicial: Estad
       </section>
 
       <div className="fila" style={{ gap: 14 }}>
-        <div style={{ width: 96, flexShrink: 0 }}><Ilustracion tipo={ilustracionDeCategoria(s.categoria)} alto={88} /></div>
+        <div style={{ width: 96, flexShrink: 0 }}><FotoProducto url={s.imagen_url} categoria={s.categoria} alto={88} alt={s.producto} /></div>
         <div className="pila" style={{ gap: 4 }}>
           <h1 className="titulo-tarjeta" style={{ fontSize: 22 }}>{s.producto}</h1>
           <span className="texto-tenue">{s.tienda} · {s.categoria ?? "Sin categoría"}</span>
         </div>
       </div>
+      {s.descripcion && <p className="descripcion-producto">{s.descripcion}</p>}
 
       {s.estado === "cerrada" ? (
         <section className="bloque-destacado pila" style={{ gap: 8 }}>

@@ -8,7 +8,8 @@ async function iniciar() {
     if (!process.env[v]) throw new Error(`Falta la variable de entorno ${v}. Revisa el archivo .env (ver .env.example).`);
   }
   const app = await NestFactory.create(AppModule);
-  app.enableCors({ origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000' });
+  // WEB_ORIGIN admite varios orígenes separados por comas (por ejemplo, los puertos 3000 y 3001).
+  app.enableCors({ origin: (process.env.WEB_ORIGIN ?? 'http://localhost:3000').split(',').map((o) => o.trim()) });
   app.enableShutdownHooks();
   const puerto = Number(process.env.PORT ?? 4000);
   await app.listen(puerto);

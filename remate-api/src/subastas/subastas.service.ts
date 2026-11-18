@@ -28,7 +28,7 @@ export class SubastasService {
     const [sala] = await this.db.consulta(
       `select s.codigo_sala, s.estado, s.precio_inicial, s.incremento_minimo, s.duracion_seg,
               s.ventana_ampliacion_seg, s.ampliacion_seg, s.cierra_en, s.oferta_vigente, s.total_pujas,
-              p.titulo as producto, p.descripcion, c.nombre as categoria, t.nombre as tienda, t.ciudad,
+              p.titulo as producto, p.descripcion, p.imagen_url, c.nombre as categoria, t.nombre as tienda, t.ciudad,
               pv.nombre_visible as postor_vigente,
               g.nombre_visible as ganador, a.monto as monto_ganador,
               clock_timestamp() as hora_servidor

@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { bs, sumarMontos } from "@/lib/formato";
-import { crearClienteSupabase } from "@/lib/supabase/cliente";
+import { useSesion } from "@/lib/sesion";
+import { FotoProducto } from "@/components/FotoProducto";
+
+const TIPOS_FOTO: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+const MAX_FOTO = 5 * 1024 * 1024;
 
 const duraciones = [
   { seg: 60, texto: "1 minuto" },
@@ -26,6 +30,26 @@ export function FormularioSubasta({ tiendaId, categorias }: { tiendaId: string; 
   const [titulo, setTitulo] = useState("");
   const [categoriaId, setCategoriaId] = useState<number | "">(categorias[0]?.id ?? "");
   const [descripcion, setDescripcion] = useState("");
+  const { supabase, sesion } = useSesion();
+  const [foto, setFoto] = useState<File | null>(null);
+  const [vistaFoto, setVistaFoto] = useState<string | null>(null);
+  const [errorFoto, setErrorFoto] = useState<string | null>(null);
+
+  // Vista previa local de la foto elegida (se libera al cambiarla).
+  useEffect(() => {
+    if (!foto) { setVistaFoto(null); return; }
+    const url = URL.createObjectURL(foto);
+    setVistaFoto(url);
+    return () => URL.revokeObjectURL(url);
+  }, [foto]);
+
+  function elegirFoto(archivo: File | undefined) {
+    setErrorFoto(null);
+    if (!archivo) return setFoto(null);
+    if (!TIPOS_FOTO[archivo.type]) return setErrorFoto("La foto debe ser JPG, PNG o WEBP.");
+    if (archivo.size > MAX_FOTO) return setErrorFoto("La foto no puede pesar más de 5 MB.");
+    setFoto(archivo);
+  }
   const [precio, setPrecio] = useState("");
   const [incremento, setIncremento] = useState("");
   const [duracion, setDuracion] = useState(180);
@@ -48,10 +72,20 @@ export function FormularioSubasta({ tiendaId, categorias }: { tiendaId: string; 
     setErrorGuardar(null);
     if (!valido) return;
     setGuardando(true);
-    const supabase = crearClienteSupabase();
+    // La foto se sube primero a la carpeta de la cuenta; el producto guarda su dirección pública.
+    let imagenUrl: string | null = null;
+    if (foto && sesion) {
+      const ruta = `${sesion.usuarioId}/${crypto.randomUUID()}.${TIPOS_FOTO[foto.type]}`;
+      const { error: eFoto } = await supabase.storage.from("productos").upload(ruta, foto, { contentType: foto.type, upsert: false });
+      if (eFoto) {
+        setGuardando(false);
+        return setErrorGuardar("No se pudo subir la foto. Revisa tu conexión o prueba con otra imagen.");
+      }
+      imagenUrl = supabase.storage.from("productos").getPublicUrl(ruta).data.publicUrl;
+    }
     const { data: producto, error: e1 } = await supabase
       .from("productos")
-      .insert({ tienda_id: tiendaId, categoria_id: categoriaId || null, titulo: titulo.trim(), descripcion: descripcion.trim() || null })
+      .insert({ tienda_id: tiendaId, categoria_id: categoriaId || null, titulo: titulo.trim(), descripcion: descripcion.trim() || null, imagen_url: imagenUrl })
       .select("id")
       .single();
     if (e1 || !producto) {
@@ -101,6 +135,17 @@ export function FormularioSubasta({ tiendaId, categorias }: { tiendaId: string; 
           <label htmlFor="descripcion">Descripción <span className="texto-chico">(opcional)</span></label>
           <textarea id="descripcion" className="entrada" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
             placeholder="Estado, medidas, detalles que mostrarás en el live" maxLength={2000} />
+          <span className="ayuda">Los compradores la verán en la vitrina y en la sala.</span>
+        </div>
+
+        <div className="campo">
+          <label htmlFor="foto">Foto del producto <span className="texto-chico">(opcional)</span></label>
+          <input id="foto" type="file" className="entrada" accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => elegirFoto(e.target.files?.[0])} />
+          {errorFoto ? <span className="error">{errorFoto}</span>
+            : <span className="ayuda">JPG, PNG o WEBP, hasta 5 MB. Si no subes una, se muestra una ilustración.</span>}
+          {foto && <button type="button" className="boton boton-secundario boton-chico" style={{ alignSelf: "flex-start" }}
+            onClick={() => { setFoto(null); const i = document.getElementById("foto") as HTMLInputElement | null; if (i) i.value = ""; }}>Quitar foto</button>}
         </div>
 
         <div className="grilla-2">
@@ -133,8 +178,10 @@ export function FormularioSubasta({ tiendaId, categorias }: { tiendaId: string; 
       <aside className="pila" style={{ gap: 16 }}>
         <div className="tarjeta pila" style={{ gap: 10 }}>
           <p className="texto-tenue">Así lo verán los compradores</p>
+          <FotoProducto url={vistaFoto} categoria={categoriaNombre} alto={170} alt="Vista previa de la foto" />
           <h2 className="titulo-tarjeta">{titulo.trim() || "Nombre del producto"}</h2>
           <span className="texto-chico">{categoriaNombre}</span>
+          {descripcion.trim() && <p className="descripcion-producto">{descripcion.trim()}</p>}
           <hr className="separador" />
           <div className="fila entre">
             <div><p className="texto-chico">Precio inicial</p><p className="monto cifra">{bs(precioN)}</p></div>
