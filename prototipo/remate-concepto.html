@@ -1,0 +1,1294 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remate, otra mirada</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fondo: #f3f4f1; --superficie: #ffffff; --superficie-2: #f8f9f6;
+  --linea: #dfe3dc; --linea-fuerte: #c9cfc6;
+  --tinta: #12241b; --tenue: #5f6e65;
+  --verde: #1d5a42; --verde-hover: #164834; --verde-tinta: #ffffff; --verde-suave: #e5eee8;
+  --arena: #c8ad7a; --arena-texto: #7d6230; --arena-suave: #f4ecdc;
+  --bien: #1f7a4d; --bien-suave: #e3f1e8;
+  --mal: #a33a22; --mal-suave: #f8e7e1;
+  --vivo: #c8402f;
+  --tablero: #12241b; --tablero-tinta: #f3f4f1; --tablero-tenue: #a9b8ae;
+  --martillo: #0f2e22;
+  --sombra: 0 1px 2px rgba(18,36,27,.05), 0 10px 28px -14px rgba(18,36,27,.22);
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --texto: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #0c1410; --superficie: #131e18; --superficie-2: #17241d; --linea: #24342b; --linea-fuerte: #33463b;
+    --tinta: #e4ece6; --tenue: #93a59a; --verde: #5cbf8f; --verde-hover: #74cda0; --verde-tinta: #08140e; --verde-suave: #1a2e23;
+    --arena: #d6bd8a; --arena-texto: #d6bd8a; --arena-suave: #2b2619; --bien: #5cc98e; --bien-suave: #173225;
+    --mal: #ef8a6f; --mal-suave: #3a1f18; --vivo: #ef6b5a; --tablero: #07100b; --tablero-tinta: #e4ece6; --tablero-tenue: #8fa396;
+    --martillo: #0a2219; --sombra: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fondo: #0c1410; --superficie: #131e18; --superficie-2: #17241d; --linea: #24342b; --linea-fuerte: #33463b;
+  --tinta: #e4ece6; --tenue: #93a59a; --verde: #5cbf8f; --verde-hover: #74cda0; --verde-tinta: #08140e; --verde-suave: #1a2e23;
+  --arena: #d6bd8a; --arena-texto: #d6bd8a; --arena-suave: #2b2619; --bien: #5cc98e; --bien-suave: #173225;
+  --mal: #ef8a6f; --mal-suave: #3a1f18; --vivo: #ef6b5a; --tablero: #07100b; --tablero-tinta: #e4ece6; --tablero-tenue: #8fa396;
+  --martillo: #0a2219; --sombra: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: 80px; }
+body { margin: 0; background: var(--fondo); color: var(--tinta); font-family: var(--texto); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, dl, dd { margin: 0; }
+h1 { font-size: clamp(26px, 3.2vw, 34px); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 17px; font-weight: 600; }
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--arena); outline-offset: 2px; border-radius: 8px; }
+.cifra { font-variant-numeric: tabular-nums; }
+.tenue { color: var(--tenue); }
+.texto-chico { font-size: 13px; color: var(--tenue); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.fila { display: flex; align-items: center; gap: 10px; }
+.entre { justify-content: space-between; }
+.envolver { flex-wrap: wrap; }
+
+.contenedor { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.pagina { padding-top: 28px; padding-bottom: 64px; display: flex; flex-direction: column; gap: 22px; }
+.estrecha { max-width: 640px; }
+
+/* Botones y campos */
+.boton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 12px; min-height: 46px; padding: 0 18px; font-weight: 600; font-size: 15px; background: var(--verde); color: var(--verde-tinta); text-decoration: none; transition: background .15s, transform .1s, opacity .15s; white-space: nowrap; }
+.boton:hover:not(:disabled) { background: var(--verde-hover); }
+.boton:active:not(:disabled) { transform: scale(.98); }
+.boton:disabled { opacity: .45; cursor: not-allowed; }
+.boton.secundario { background: transparent; color: var(--tinta); border: 1.5px solid var(--linea-fuerte); }
+.boton.secundario:hover:not(:disabled) { background: var(--superficie-2); }
+.boton.fantasma { background: transparent; color: var(--tenue); min-height: 38px; padding: 0 12px; }
+.boton.fantasma:hover { background: var(--superficie-2); color: var(--tinta); }
+.boton.chico { min-height: 36px; padding: 0 12px; font-size: 14px; border-radius: 10px; }
+.boton.peligro { background: transparent; color: var(--mal); border: 1.5px solid color-mix(in srgb, var(--mal) 40%, transparent); }
+.boton.peligro:hover { background: var(--mal-suave); }
+.boton.bloque { width: 100%; }
+.boton.arena { background: var(--arena); color: #1d1606; }
+.boton.arena:hover { background: #d9c294; }
+.boton.claro { background: transparent; color: #e4ece6; border: 1.5px solid rgba(228,236,230,.3); }
+.boton.claro:hover { background: rgba(228,236,230,.08); }
+
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo label { font-size: 14px; font-weight: 600; }
+.entrada { width: 100%; min-height: 46px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--linea-fuerte); background: var(--superficie); font-size: 16px; }
+.entrada:focus { outline: none; border-color: var(--verde); box-shadow: 0 0 0 3px color-mix(in srgb, var(--verde) 22%, transparent); }
+.ayuda { font-size: 13px; color: var(--tenue); }
+.error { font-size: 14px; color: var(--mal); min-height: 0; }
+.error:empty { display: none; }
+.form { display: flex; flex-direction: column; gap: 16px; }
+.grilla-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.casilla { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
+.casilla input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--verde); }
+
+.tarjeta { background: var(--superficie); border: 1px solid var(--linea); border-radius: 18px; box-shadow: var(--sombra); }
+.tarjeta.relleno { padding: 22px; }
+.aviso { font-size: 14px; border-radius: 12px; padding: 11px 13px; background: var(--verde-suave); color: var(--tinta); }
+.aviso.alerta { background: var(--mal-suave); color: var(--mal); }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; background: var(--superficie-2); color: var(--tenue); border: 1px solid var(--linea); }
+.chip.vivo { background: color-mix(in srgb, var(--vivo) 12%, transparent); color: var(--vivo); border-color: transparent; }
+.chip.vivo::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: latido 1.6s infinite; }
+.chip.info { background: var(--arena-suave); color: var(--arena-texto); border-color: transparent; }
+.chip.ok { background: var(--bien-suave); color: var(--bien); border-color: transparent; }
+.chip.mal { background: var(--mal-suave); color: var(--mal); border-color: transparent; }
+.chip.verde { background: var(--verde-suave); color: var(--verde); border-color: transparent; }
+@keyframes latido { 50% { opacity: .35; } }
+.codigo-mini { white-space: nowrap; font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--tenue); font-variant-numeric: tabular-nums; }
+
+/* Barra superior */
+#barra { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--fondo) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--linea); }
+#barra:empty { display: none; }
+.barra-in { display: flex; align-items: center; gap: 24px; min-height: 64px; }
+.marca { display: inline-flex; color: var(--verde); text-decoration: none; flex-shrink: 0; }
+.logo { display: block; width: auto; }
+.nav { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.nav a { text-decoration: none; color: var(--tenue); font-weight: 500; font-size: 15px; padding: 8px 12px; border-radius: 10px; white-space: nowrap; }
+.nav a:hover { color: var(--tinta); background: var(--superficie-2); }
+.nav a[aria-current="page"] { color: var(--verde); background: var(--verde-suave); }
+.cuenta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--verde); color: var(--verde-tinta); display: grid; place-items: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.avatar.arena { background: var(--arena); color: #1d1606; }
+.avatar.gris { background: var(--linea-fuerte); color: var(--tinta); }
+.cuenta-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.cuenta-txt strong { font-size: 14px; }
+.cuenta-txt small { font-size: 12px; color: var(--tenue); }
+
+/* Acceso */
+.acceso { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.acceso-marca { background: var(--martillo); color: #e4ece6; padding: 40px max(24px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+.acceso-marca .logo { color: #f3f4f1; }
+.acceso-marca .lugar { font-size: 14px; color: #a9b8ae; margin-top: 10px; }
+.acceso-martillo { position: absolute; right: -60px; bottom: -40px; width: 380px; opacity: .9; }
+.acceso-panel { display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+.acceso-caja { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 22px; }
+.pestanas { display: flex; gap: 4px; padding: 4px; background: var(--superficie-2); border: 1px solid var(--linea); border-radius: 14px; }
+.pestanas button { flex: 1; border: 0; background: transparent; border-radius: 10px; min-height: 40px; font-weight: 600; color: var(--tenue); }
+.pestanas button[aria-selected="true"] { background: var(--superficie); color: var(--tinta); box-shadow: var(--sombra); }
+.pestanas.linea { background: transparent; border: 0; border-bottom: 1px solid var(--linea); border-radius: 0; padding: 0; gap: 18px; overflow-x: auto; }
+.pestanas.linea a { text-decoration: none; padding: 10px 2px; color: var(--tenue); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.pestanas.linea a[aria-current="page"] { color: var(--tinta); border-color: var(--verde); }
+.demo { border-top: 1px solid var(--linea); padding-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.demo-cuenta { display: flex; align-items: center; gap: 12px; text-align: left; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--linea); background: var(--superficie); }
+.demo-cuenta:hover { border-color: var(--linea-fuerte); background: var(--superficie-2); }
+.demo-cuenta span { display: flex; flex-direction: column; line-height: 1.25; }
+.demo-cuenta small { color: var(--tenue); font-size: 13px; }
+
+/* Encabezados de página */
+.encabezado { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.encabezado p { margin-top: 6px; }
+.volver { font-size: 14px; color: var(--tenue); text-decoration: none; font-weight: 500; align-self: flex-start; }
+.volver:hover { color: var(--tinta); }
+.titulo-seccion { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.conteo { font-size: 13px; font-weight: 600; color: var(--tenue); background: var(--superficie-2); border: 1px solid var(--linea); border-radius: 999px; padding: 1px 9px; }
+.codigo-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+.codigo-form .entrada { width: 170px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.codigo-form .error { flex-basis: 100%; }
+
+/* Tarjetas de subasta */
+.grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+.sub { display: flex; flex-direction: column; text-decoration: none; overflow: hidden; transition: transform .15s, box-shadow .15s; }
+.sub:hover { transform: translateY(-2px); }
+.ilus { background: var(--verde-suave); display: grid; place-items: center; position: relative; aspect-ratio: 16 / 10; }
+.ilus svg { width: 62%; height: auto; }
+.ilus .chip { position: absolute; left: 12px; top: 12px; background: var(--superficie); }
+.sub-cuerpo { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+.sub-cuerpo h3 { font-size: 17px; }
+.sub-pie { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin-top: 4px; }
+.sub-pie strong { display: block; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sub-pie .derecha { text-align: right; }
+.sub-pie .derecha strong { font-size: 16px; }
+.ganando { font-size: 12px; font-weight: 600; color: var(--bien); }
+.vacio { padding: 28px; text-align: center; color: var(--tenue); border: 1.5px dashed var(--linea-fuerte); border-radius: 18px; }
+
+/* Sala */
+.sala-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 32px; align-items: start; }
+.sala-info { display: flex; flex-direction: column; gap: 18px; }
+.sala-info .ilus { border-radius: 20px; aspect-ratio: 16 / 9; }
+.sala-info .ilus svg { width: 46%; }
+.datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); border-radius: 14px; overflow: hidden; }
+.datos div { background: var(--superficie); padding: 12px 14px; }
+.datos dt { font-size: 13px; color: var(--tenue); }
+.datos dd { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.sala { position: relative; overflow: hidden; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 560px; position: sticky; top: 84px; }
+.sala-sup { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--tenue); }
+.sala-sup strong { color: var(--tinta); }
+.conexion { display: inline-flex; align-items: center; gap: 6px; }
+.conexion::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--bien); animation: latido 1.6s infinite; }
+.conexion.off::before { background: var(--linea-fuerte); animation: none; }
+
+.tablero { background: var(--tablero); color: var(--tablero-tinta); border-radius: 18px; padding: 16px; position: relative; overflow: hidden; border: 1px solid var(--linea); }
+.tablero .etiqueta { font-size: 12px; color: var(--tablero-tenue); }
+.precio { font-family: var(--display); font-weight: 800; font-size: 46px; line-height: 1; letter-spacing: -0.04em; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.precio small { font-size: 18px; font-weight: 600; color: var(--tablero-tenue); margin-right: 4px; letter-spacing: 0; }
+.precio.salto { animation: salto .45s ease; }
+@keyframes salto { 30% { transform: scale(1.05); color: var(--arena); } }
+.lider { font-size: 13px; margin-top: 8px; color: var(--tablero-tenue); }
+.lider b { color: var(--tablero-tinta); font-weight: 600; }
+.tiempo { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; color: var(--tablero-tenue); }
+.tiempo strong { font-family: var(--display); font-weight: 700; font-size: 18px; color: var(--tablero-tinta); font-variant-numeric: tabular-nums; }
+.barra-tiempo { height: 5px; border-radius: 3px; background: rgba(169,184,174,.22); margin-top: 8px; overflow: hidden; }
+.barra-tiempo i { display: block; height: 100%; width: 100%; background: var(--arena); transition: width .25s linear; }
+.tablero.urgente .barra-tiempo i { background: #ef8a6f; }
+.tablero.urgente .tiempo strong { color: #ffb39e; }
+.ampliacion { position: absolute; right: 12px; top: 12px; font-size: 12px; font-weight: 700; background: var(--arena); color: #1d1606; padding: 3px 8px; border-radius: 6px; opacity: 0; transform: translateY(-4px); transition: all .25s; }
+.ampliacion.ver { opacity: 1; transform: none; }
+
+.historial { display: flex; flex-direction: column; font-size: 14px; flex: 1; }
+.historial-titulo { font-size: 12px; color: var(--tenue); display: flex; justify-content: space-between; margin-bottom: 4px; }
+.puja-fila { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--linea); }
+.puja-fila:last-child { border-bottom: 0; }
+.puja-fila.nueva { animation: entra .3s ease; }
+@keyframes entra { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.paleta { width: 30px; height: 30px; border-radius: 50% 50% 50% 8px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--superficie-2); color: var(--tenue); border: 1px solid var(--linea-fuerte); font-variant-numeric: tabular-nums; }
+.puja-fila.lider-fila .paleta { background: var(--tinta); color: var(--superficie); border-color: var(--tinta); }
+.puja-fila.mia .paleta { background: var(--verde); color: var(--verde-tinta); border-color: var(--verde); }
+.puja-fila .quien small { display: block; font-size: 11px; color: var(--tenue); }
+.puja-fila .monto { font-weight: 700; font-variant-numeric: tabular-nums; }
+.vacio-mini { font-size: 14px; color: var(--tenue); padding: 10px 0; }
+
+.mi-estado { font-size: 13px; border-radius: 12px; padding: 9px 11px; min-height: 38px; background: var(--superficie-2); color: var(--tenue); }
+.mi-estado.enviando { color: var(--tinta); }
+.mi-estado.aceptada { background: var(--bien-suave); color: var(--bien); }
+.mi-estado.rechazada { background: var(--mal-suave); color: var(--mal); }
+.ofertar { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.ofertar .boton { min-height: 52px; font-size: 16px; }
+.tu-paleta { font-size: 12px; color: var(--tenue); text-align: center; }
+
+/* Adjudicación */
+.martillo { position: absolute; inset: 0; background: var(--martillo); color: #e4ece6; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; text-align: center; padding: 24px; z-index: 2; }
+.martillo.anim { animation: aparece .35s ease both; }
+@keyframes aparece { from { opacity: 0; } }
+.martillo .franja { position: absolute; left: 0; right: 0; top: 0; height: 8px; background: var(--arena); }
+.martillo .franja.abajo { top: auto; bottom: 0; }
+.martillo.anim .franja { transform: scaleX(0); transform-origin: left; animation: barrido .7s cubic-bezier(.6,0,.2,1) .1s forwards; }
+.martillo.anim .franja.abajo { transform-origin: right; }
+@keyframes barrido { to { transform: scaleX(1); } }
+.martillo.anim svg { animation: golpe .6s cubic-bezier(.3,1.6,.5,1) .15s both; }
+@keyframes golpe { from { transform: rotate(-35deg) translateY(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
+.martillo h3 { font-family: var(--display); font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+.martillo .monto-final { font-family: var(--display); font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--arena); letter-spacing: -0.03em; }
+.martillo p { font-size: 14px; color: #a9b8ae; max-width: 28ch; }
+.martillo-acciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+
+/* Tablas y métricas */
+.tabla-env { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; color: var(--tenue); font-weight: 500; font-size: 13px; padding: 12px 14px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+td { padding: 12px 14px; border-bottom: 1px solid var(--linea); font-variant-numeric: tabular-nums; vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td.accion { text-align: right; white-space: nowrap; }
+.persona { display: flex; align-items: center; gap: 10px; }
+.persona span { display: flex; flex-direction: column; line-height: 1.25; }
+.persona small { color: var(--tenue); font-size: 12px; }
+.persona .avatar { width: 32px; height: 32px; font-size: 12px; }
+.metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--linea); border: 1px solid var(--linea); border-radius: 16px; overflow: hidden; }
+.metricas div { background: var(--superficie); padding: 14px 16px; }
+.metricas span { font-size: 13px; color: var(--tenue); }
+.metricas strong { display: block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Consola del vendedor */
+.consola-cab { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: stretch; }
+.consola-lote { display: flex; gap: 16px; align-items: center; }
+.consola-lote .ilus { width: 120px; border-radius: 16px; flex-shrink: 0; }
+.codigo-caja { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.codigo-grande { font-family: var(--display); font-size: 30px; font-weight: 800; letter-spacing: .03em; color: var(--verde); }
+.resultado { padding: 18px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: center; flex-wrap: wrap; background: var(--martillo); color: #e4ece6; border-radius: 18px; border-top: 6px solid var(--arena); }
+.resultado .monto-final { font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--arena); }
+.resultado p { color: #a9b8ae; font-size: 14px; }
+
+/* Registro de tienda */
+.pasos-reg { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.pasos-reg li { font-size: 13px; color: var(--tenue); padding-top: 10px; border-top: 3px solid var(--linea); font-weight: 500; }
+.pasos-reg li.hecho { border-color: var(--verde); }
+.pasos-reg li.actual { border-color: var(--verde); color: var(--tinta); font-weight: 700; }
+.prefijo { position: relative; }
+.prefijo span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--tenue); }
+.prefijo .entrada { padding-left: 30px; }
+.resumen { display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; font-size: 15px; padding: 14px 16px; background: var(--superficie-2); border-radius: 14px; }
+.resumen dt { color: var(--tenue); }
+.resumen dd { font-weight: 600; text-align: right; }
+.exito { text-align: center; align-items: center; padding: 36px 24px; }
+.exito .sello { width: 64px; height: 64px; border-radius: 50%; background: var(--verde-suave); color: var(--verde); display: grid; place-items: center; }
+
+/* Acta */
+.acta { padding: 28px; position: relative; overflow: hidden; }
+.acta::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--arena); }
+.acta-dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 18px; margin-top: 18px; font-size: 15px; }
+.acta-dl dt { color: var(--tenue); }
+.acta-dl dd { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.acta-num { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--linea-fuerte); font-size: 13px; color: var(--tenue); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.acta-layout { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 24px; align-items: start; }
+
+/* Diálogo y aviso flotante */
+dialog { border: 1px solid var(--linea); border-radius: 20px; padding: 0; width: min(520px, calc(100vw - 32px)); background: var(--superficie); color: var(--tinta); box-shadow: 0 30px 80px -20px rgba(0,0,0,.45); }
+dialog::backdrop { background: rgba(12, 20, 16, .55); }
+dialog .form { padding: 22px; }
+.dlg-cab { display: flex; justify-content: space-between; align-items: center; }
+.icono { border: 0; background: transparent; width: 36px; height: 36px; border-radius: 10px; font-size: 22px; color: var(--tenue); }
+.icono:hover { background: var(--superficie-2); color: var(--tinta); }
+.acciones-dlg { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+#toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); background: var(--tinta); color: var(--superficie); padding: 11px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; opacity: 0; pointer-events: none; transition: all .25s ease; z-index: 50; max-width: calc(100vw - 32px); }
+#toast.ver { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 960px) {
+  .sala-layout, .acta-layout { grid-template-columns: 1fr; }
+  .sala { position: relative; top: 0; order: -1; }
+  .consola-cab { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .acceso { grid-template-columns: 1fr; }
+  .acceso-marca { padding: 24px 16px; min-height: 0; }
+  .acceso-martillo { width: 180px; right: -30px; bottom: -40px; opacity: .5; }
+  .barra-in { flex-wrap: wrap; gap: 8px 12px; padding-top: 10px; }
+  .nav { order: 3; flex-basis: 100%; overflow-x: auto; padding-bottom: 8px; }
+  .cuenta { margin-left: auto; }
+  .cuenta-txt { display: none; }
+  .grilla-2 { grid-template-columns: 1fr; }
+  .precio { font-size: 40px; }
+  .consola-lote .ilus { width: 84px; }
+  .codigo-form { width: 100%; }
+  .codigo-form .entrada { flex: 1; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header id="barra"></header>
+<main id="vista"></main>
+
+<dialog id="dlg-lote" aria-labelledby="dlg-titulo">
+  <form class="form" data-form="lote" novalidate>
+    <div class="dlg-cab">
+      <h2 id="dlg-titulo">Nuevo lote</h2>
+      <button type="button" class="icono" data-accion="cerrar-dlg" aria-label="Cerrar">×</button>
+    </div>
+    <div class="campo">
+      <label for="l-prod">Producto</label>
+      <input id="l-prod" name="producto" class="entrada" maxlength="60" autocomplete="off">
+    </div>
+    <div class="campo">
+      <label for="l-cat">Categoría</label>
+      <select id="l-cat" name="categoria" class="entrada">
+        <option>Hogar</option><option>Tecnología</option><option>Moda</option><option>Coleccionables</option>
+      </select>
+    </div>
+    <div class="grilla-2">
+      <div class="campo">
+        <label for="l-precio">Precio inicial (Bs)</label>
+        <input id="l-precio" name="precio" class="entrada cifra" inputmode="decimal" value="50" autocomplete="off">
+      </div>
+      <div class="campo">
+        <label for="l-inc">Incremento mínimo (Bs)</label>
+        <input id="l-inc" name="incremento" class="entrada cifra" inputmode="decimal" value="5" autocomplete="off">
+      </div>
+    </div>
+    <div class="campo">
+      <label for="l-dur">Duración</label>
+      <select id="l-dur" name="duracion" class="entrada">
+        <option value="45">45 segundos</option><option value="60" selected>1 minuto</option><option value="120">2 minutos</option><option value="300">5 minutos</option>
+      </select>
+    </div>
+    <p class="error" aria-live="polite"></p>
+    <div class="acciones-dlg">
+      <button type="button" class="boton secundario" data-accion="cerrar-dlg">Cancelar</button>
+      <button class="boton">Guardar como borrador</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const VENTANA = 10000, AMPLIACION = 10000;
+  const vista = document.getElementById("vista");
+  const barra = document.getElementById("barra");
+  const ahora = () => Date.now();
+  const AYER = ahora() - 26 * 3600e3;
+
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const bs = (n) => "Bs " + Number(n).toLocaleString("es-BO", { maximumFractionDigits: 2 });
+  const num = (n) => Number(n).toLocaleString("es-BO", { maximumFractionDigits: 2 });
+  const hora = (t) => new Date(t).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const fecha = (t) => new Date(t).toLocaleDateString("es-BO", { day: "numeric", month: "short" }) + ", " + new Date(t).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" });
+  const reloj = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
+  const duracionTxt = (s) => (s < 60 ? `${s} segundos` : s === 60 ? "1 minuto" : `${s / 60} minutos`);
+  const iniciales = (n) => n.split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
+
+  // ---------- Datos de ejemplo ----------
+  const D = {
+    usuarios: [
+      { id: 1, nombre: "Ana Quispe", correo: "ana@ejemplo.com", clave: "demo1234", rol: "usuario", paleta: 27, activo: true, alta: AYER - 40 * 864e5 },
+      { id: 2, nombre: "Rocío Mamani", correo: "rocio@ejemplo.com", clave: "demo1234", rol: "vendedor", paleta: 31, activo: true, alta: AYER - 90 * 864e5 },
+      { id: 3, nombre: "Equipo Remate", correo: "admin@ejemplo.com", clave: "demo1234", rol: "administrador", paleta: null, activo: true, alta: AYER - 120 * 864e5 },
+      { id: 4, nombre: "Luis Rojas", correo: "luis@ejemplo.com", clave: "demo1234", rol: "usuario", paleta: 8, activo: true, alta: AYER - 30 * 864e5 },
+      { id: 5, nombre: "Marco Vargas", correo: "marco@ejemplo.com", clave: "demo1234", rol: "vendedor", paleta: 5, activo: true, alta: AYER - 60 * 864e5 },
+      { id: 6, nombre: "Gaby Torrico", correo: "gaby@ejemplo.com", clave: "demo1234", rol: "usuario", paleta: 12, activo: true, alta: AYER - 12 * 864e5 },
+      { id: 7, nombre: "Edwin Flores", correo: "edwin@ejemplo.com", clave: "demo1234", rol: "usuario", paleta: 19, activo: true, alta: AYER - 5 * 864e5 },
+      { id: 8, nombre: "Carla Soria", correo: "carla@ejemplo.com", clave: "demo1234", rol: "usuario", paleta: 44, activo: false, alta: AYER - 20 * 864e5 },
+    ],
+    tiendas: [
+      { id: 1, nombre: "Casa Norte", tiktok: "casanorte.cbba", ciudad: "Cochabamba", categoria: "Hogar", duenoId: 2, activa: true, alta: AYER - 88 * 864e5 },
+      { id: 2, nombre: "Retro Valle", tiktok: "retrovalle", ciudad: "Quillacollo", categoria: "Coleccionables", duenoId: 5, activa: true, alta: AYER - 58 * 864e5 },
+    ],
+    subastas: [],
+    pujas: [],
+    solicitudes: [],
+  };
+  const nuevaSubasta = (o) => ({ precio: null, liderId: null, fin: null, orden: 0, ampliaciones: 0, timers: [], mia: null, cerradaEn: null, abiertaEn: null, ampliadaEn: 0, saltoEn: 0, demo: false, ...o });
+  D.subastas.push(
+    nuevaSubasta({ id: 1, codigo: "RM-4821", producto: "Sillón de lectura", tiendaId: 1, categoria: "Hogar", ilus: "sillon", precioInicial: 80, incremento: 10, duracion: 60, estado: "programada" }),
+    nuevaSubasta({ id: 2, codigo: "RM-4822", producto: "Espejo de bronce", tiendaId: 1, categoria: "Hogar", ilus: "espejo", precioInicial: 120, incremento: 10, duracion: 60, estado: "programada" }),
+    nuevaSubasta({ id: 3, codigo: "RM-4823", producto: "Juego de tazas", tiendaId: 1, categoria: "Hogar", ilus: "tazas", precioInicial: 40, incremento: 5, duracion: 45, estado: "borrador" }),
+    nuevaSubasta({ id: 4, codigo: "RM-3307", producto: "Cámara analógica", tiendaId: 2, categoria: "Coleccionables", ilus: "camara", precioInicial: 200, incremento: 20, duracion: 60, estado: "programada" }),
+    nuevaSubasta({ id: 5, codigo: "RM-4819", producto: "Lámpara de mesa", tiendaId: 1, categoria: "Hogar", ilus: "lampara", precioInicial: 50, incremento: 5, duracion: 60, estado: "cerrada" }),
+    nuevaSubasta({ id: 6, codigo: "RM-3305", producto: "Radio Philips", tiendaId: 2, categoria: "Coleccionables", ilus: "radio", precioInicial: 150, incremento: 10, duracion: 60, estado: "cerrada" }),
+  );
+  // Historial de subastas ya cerradas.
+  function sembrar(codigo, inicio, filas) {
+    const s = subPorCodigo(codigo);
+    s.abiertaEn = inicio;
+    filas.forEach(([uid, monto, seg, ok]) => {
+      const t = inicio + seg * 1000;
+      if (ok === false) { D.solicitudes.push({ subastaId: s.id, orden: null, usuarioId: uid, monto, t, resultado: "rechazada", motivo: "Otra persona ofertó antes." }); return; }
+      s.orden += 1; s.precio = monto; s.liderId = uid;
+      D.pujas.push({ subastaId: s.id, orden: s.orden, usuarioId: uid, monto, t });
+      D.solicitudes.push({ subastaId: s.id, orden: s.orden, usuarioId: uid, monto, t, resultado: "aceptada", motivo: "" });
+    });
+    s.cerradaEn = inicio + 64 * 1000;
+    s.ganadorId = s.liderId;
+  }
+
+  let sesion = null;
+  let demoIniciado = false;
+  const ui = { loginTab: "ingresar", registro: { paso: 1, datos: {}, listo: false }, abrirDialogo: false };
+
+  const usuario = (id) => D.usuarios.find((u) => u.id === id);
+  const tienda = (id) => D.tiendas.find((t) => t.id === id);
+  const tiendaDe = (uid) => D.tiendas.find((t) => t.duenoId === uid);
+  const subPorCodigo = (c) => D.subastas.find((s) => s.codigo === c);
+  const yo = () => (sesion ? usuario(sesion) : null);
+  const pujasDe = (s) => D.pujas.filter((p) => p.subastaId === s.id).sort((a, b) => b.orden - a.orden);
+  const solicitudesDe = (s) => D.solicitudes.filter((q) => q.subastaId === s.id).sort((a, b) => b.t - a.t);
+  const corto = (u) => u.nombre.split(" ")[0];
+  const esDueno = (s, u) => !!u && tienda(s.tiendaId).duenoId === u.id;
+  const minimo = (s) => (s.precio == null ? s.precioInicial : s.precio + s.incremento);
+
+  sembrar("RM-4819", AYER, [[6, 50, 6], [1, 55, 14], [4, 60, 23], [6, 60, 24, false], [1, 65, 41]]);
+  sembrar("RM-3305", AYER + 3 * 3600e3, [[7, 150, 5], [4, 160, 12], [7, 180, 30], [1, 180, 31, false], [4, 210, 52]]);
+
+  // ---------- Servidor simulado ----------
+  function despues(s, ms, f) { s.timers.push(setTimeout(f, ms)); }
+  function limpiar(s) { s.timers.forEach(clearTimeout); s.timers = []; }
+
+  function abrir(s) {
+    s.estado = "abierta";
+    s.demo = true;
+    s.abiertaEn = ahora();
+    s.fin = ahora() + s.duracion * 1000;
+    programarPostor(s, 1100);
+    avisar(s);
+  }
+
+  function reiniciar(s) {
+    limpiar(s);
+    D.pujas = D.pujas.filter((p) => p.subastaId !== s.id);
+    D.solicitudes = D.solicitudes.filter((q) => q.subastaId !== s.id);
+    Object.assign(s, { precio: null, liderId: null, ganadorId: null, orden: 0, ampliaciones: 0, mia: null, cerradaEn: null, ampliadaEn: 0 });
+    abrir(s);
+  }
+
+  // Valida cada solicitud con el estado de la sala en el momento en que llega.
+  function procesar(s, uid, monto, latencia, alResolver) {
+    despues(s, latencia, () => {
+      const t = ahora();
+      let resultado = "aceptada", motivo = "";
+      if (s.estado !== "abierta" || t >= s.fin) { resultado = "rechazada"; motivo = "La subasta ya cerró."; }
+      else if (monto < minimo(s)) { resultado = "rechazada"; motivo = `Otra persona ofertó antes. El mínimo ahora es ${bs(minimo(s))}.`; }
+      else {
+        s.orden += 1; s.precio = monto; s.liderId = uid; s.saltoEn = t;
+        D.pujas.push({ subastaId: s.id, orden: s.orden, usuarioId: uid, monto, t });
+        if (s.fin - t <= VENTANA) { s.fin = t + AMPLIACION; s.ampliaciones += 1; s.ampliadaEn = t; }
+      }
+      D.solicitudes.push({ subastaId: s.id, orden: resultado === "aceptada" ? s.orden : null, usuarioId: uid, monto, t, resultado, motivo });
+      if (alResolver) alResolver(resultado, motivo);
+      avisar(s);
+    });
+  }
+
+  function postores(s) {
+    const dueno = tienda(s.tiendaId).duenoId;
+    return D.usuarios.filter((u) => u.activo && u.paleta && u.id !== sesion && u.id !== dueno && u.id !== s.liderId);
+  }
+
+  function programarPostor(s, espera) {
+    despues(s, espera, () => {
+      if (s.estado !== "abierta") return;
+      const cand = postores(s);
+      const cerca = s.fin - ahora() < VENTANA;
+      if (cand.length && Math.random() < (cerca ? 0.5 : 0.85) && (s.precio ?? 0) < s.precioInicial * 3.2) {
+        const u = cand[Math.floor(Math.random() * cand.length)];
+        const monto = s.precio == null ? s.precioInicial : s.precio + (Math.random() < 0.25 ? 2 : 1) * s.incremento;
+        procesar(s, u.id, monto, 150 + Math.random() * 450);
+      }
+      programarPostor(s, 1600 + Math.random() * 2600);
+    });
+  }
+
+  function cerrar(s) {
+    s.estado = "cerrada";
+    s.cerradaEn = ahora();
+    s.ganadorId = s.liderId;
+    avisar(s);
+  }
+
+  function tic() {
+    D.subastas.forEach((s) => { if (s.estado === "abierta" && ahora() >= s.fin) cerrar(s); });
+    actualizarVivos();
+  }
+
+  // ---------- Dibujos ----------
+  const LOGO = (alto) => `<svg class="logo" height="${alto}" viewBox="0 0 360 106" role="img" aria-label="remate."><g fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M10 40V80M10 58a18 18 0 0 1 18-18"/><path d="M44 60H84A20 20 0 1 0 78.1 74.1"/><path d="M102 40V80M102 56a16 16 0 0 1 32 0V80M134 56a16 16 0 0 1 32 0V80"/><path d="M224 60a20 20 0 1 0-40 0a20 20 0 1 0 40 0M224 40V80"/><path d="M252 26V68a12 12 0 0 0 12 12M242 40H266"/><path d="M280 60H320A20 20 0 1 0 314.1 74.1"/></g><circle cx="342" cy="79" r="7" fill="#c8ad7a"/></svg>`;
+  const MARTILLO = (w, cabeza = "var(--arena)", mango = "#e4ece6") => `<svg width="${w}" height="${w}" viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-38 20 20)"><rect x="9" y="8" width="22" height="11" rx="3" fill="${cabeza}"/><rect x="18.2" y="18" width="3.6" height="17" rx="1.8" fill="${mango}"/></g></svg>`;
+  const SOMBRA = (rx) => `<ellipse cx="100" cy="136" rx="${rx}" ry="7" fill="rgba(18,36,27,.13)"/>`;
+  function ilus(t) {
+    let rejilla = "";
+    for (let f = 0; f < 4; f++) for (let c = 0; c < 5; c++) rejilla += `<circle cx="${56 + c * 11}" cy="${68 + f * 12}" r="3" fill="#8a5a3c"/>`;
+    const g = {
+      sillon: `${SOMBRA(70)}<rect x="58" y="30" width="84" height="66" rx="20" fill="#6b9a63"/><rect x="52" y="72" width="96" height="32" rx="11" fill="#4c7c46"/><rect x="42" y="58" width="20" height="44" rx="10" fill="#6b9a63"/><rect x="138" y="58" width="20" height="44" rx="10" fill="#6b9a63"/><rect x="64" y="102" width="7" height="26" rx="3" fill="#6b4a32" transform="rotate(10 67 115)"/><rect x="129" y="102" width="7" height="26" rx="3" fill="#6b4a32" transform="rotate(-10 132 115)"/>`,
+      espejo: `${SOMBRA(40)}<rect x="94" y="108" width="12" height="24" rx="3" fill="#8a6d36"/><rect x="72" y="128" width="56" height="8" rx="4" fill="#8a6d36"/><ellipse cx="100" cy="62" rx="40" ry="52" fill="#c8ad7a"/><ellipse cx="100" cy="62" rx="31" ry="43" fill="#dfe9e4"/><path d="M84 42q10-12 24-8" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".85"/>`,
+      tazas: `${SOMBRA(74)}<rect x="34" y="60" width="54" height="64" rx="12" fill="#efe9da"/><path d="M88 76h8a12 12 0 0 1 0 24h-8" stroke="#efe9da" stroke-width="7" fill="none"/><rect x="34" y="80" width="54" height="8" fill="#1d5a42"/><rect x="110" y="68" width="50" height="56" rx="12" fill="#efe9da"/><path d="M160 80h7a11 11 0 0 1 0 22h-7" stroke="#efe9da" stroke-width="7" fill="none"/><rect x="110" y="86" width="50" height="8" fill="#c8ad7a"/>`,
+      lampara: `${SOMBRA(44)}<rect x="72" y="124" width="56" height="12" rx="6" fill="#1d5a42"/><rect x="96" y="66" width="8" height="60" rx="4" fill="#5b6b61"/><path d="M62 70L80 20H120L138 70Z" fill="#c8ad7a"/><path d="M62 70H138" stroke="#a88a4f" stroke-width="4"/>`,
+      camara: `${SOMBRA(70)}<rect x="52" y="34" width="34" height="16" rx="4" fill="#2c3a33"/><rect x="36" y="46" width="128" height="80" rx="12" fill="#2c3a33"/><rect x="36" y="62" width="128" height="10" fill="#c8ad7a"/><circle cx="104" cy="90" r="28" fill="#5b6b61"/><circle cx="104" cy="90" r="19" fill="#12241b"/><circle cx="97" cy="83" r="5" fill="#dfe9e4" opacity=".8"/><rect x="138" y="52" width="16" height="7" rx="2" fill="#dfe9e4"/>`,
+      radio: `${SOMBRA(72)}<path d="M60 46L130 18" stroke="#5b6b61" stroke-width="4" stroke-linecap="round"/><rect x="32" y="44" width="136" height="84" rx="14" fill="#8a5a3c"/><rect x="44" y="56" width="66" height="58" rx="8" fill="#c8ad7a"/>${rejilla}<rect x="120" y="58" width="36" height="14" rx="3" fill="#efe9da"/><circle cx="128" cy="98" r="9" fill="#efe9da"/><circle cx="150" cy="98" r="9" fill="#efe9da"/>`,
+      prenda: `${SOMBRA(56)}<path d="M78 22L56 30L30 54L46 74L60 64V128H140V64L154 74L170 54L144 30L122 22Q100 38 78 22Z" fill="#1d5a42"/><path d="M78 22Q100 38 122 22" stroke="#c8ad7a" stroke-width="5" fill="none"/>`,
+      caja: `${SOMBRA(60)}<path d="M100 28L160 52V110L100 134L40 110V52Z" fill="#c8ad7a"/><path d="M40 52L100 76L160 52M100 76V134" stroke="#a88a4f" stroke-width="4" fill="none"/>`,
+    };
+    return `<svg viewBox="0 0 200 150" aria-hidden="true">${g[t] || g.caja}</svg>`;
+  }
+  const ILUS_CATEGORIA = { Hogar: "caja", Tecnología: "radio", Moda: "prenda", Coleccionables: "camara" };
+
+  const CHIP = {
+    borrador: ["Borrador", ""], programada: ["Lista para abrir", "info"], abierta: ["En vivo", "vivo"], cerrada: ["Cerrada", ""],
+  };
+  const chip = (e, comprador) => {
+    const [txt, cls] = CHIP[e];
+    return `<span class="chip ${cls}">${comprador && e === "programada" ? "Próximamente" : txt}</span>`;
+  };
+  const etiquetaRol = (u) => u.rol === "administrador" ? "Administrador" : u.rol === "vendedor" ? `Vendedor · ${esc(tiendaDe(u.id)?.nombre ?? "")}` : "Usuario";
+  const chipRol = (u) => u.rol === "administrador" ? `<span class="chip info">Administrador</span>` : u.rol === "vendedor" ? `<span class="chip verde">Compra y vende</span>` : `<span class="chip">Usuario</span>`;
+  const avatar = (u) => `<span class="avatar ${u.rol === "administrador" ? "arena" : u.activo ? "" : "gris"}">${esc(iniciales(u.nombre))}</span>`;
+
+  // ---------- Vistas ----------
+  function vistaIngresar() {
+    const demo = [[1, "Usuario: puja en las salas"], [2, "Vendedor: Casa Norte, también puja"], [3, "Administrador"]];
+    const formulario = ui.loginTab === "ingresar" ? `
+      <form class="form" data-form="ingresar" novalidate>
+        <div class="campo"><label for="i-correo">Correo</label><input id="i-correo" name="correo" type="email" class="entrada" autocomplete="off"></div>
+        <div class="campo"><label for="i-clave">Contraseña</label><input id="i-clave" name="clave" type="password" class="entrada" autocomplete="new-password"></div>
+        <p class="error" aria-live="polite"></p>
+        <button class="boton bloque">Ingresar</button>
+      </form>` : `
+      <form class="form" data-form="crear" novalidate>
+        <div class="campo"><label for="c-nombre">Nombre y apellido</label><input id="c-nombre" name="nombre" class="entrada" autocomplete="off" maxlength="40"></div>
+        <div class="campo"><label for="c-correo">Correo</label><input id="c-correo" name="correo" type="email" class="entrada" autocomplete="off"></div>
+        <div class="campo"><label for="c-clave">Contraseña</label><input id="c-clave" name="clave" type="password" class="entrada" autocomplete="new-password"><span class="ayuda">Al menos 8 caracteres.</span></div>
+        <p class="error" aria-live="polite"></p>
+        <button class="boton bloque">Crear cuenta</button>
+        <p class="texto-chico">Tu cuenta empieza como usuario: puedes pujar en cualquier sala. Si registras una tienda, también podrás vender.</p>
+      </form>`;
+    return `
+      <div class="acceso">
+        <aside class="acceso-marca">
+          <div>${LOGO(40)}<p class="lugar">Subastas en vivo · Cochabamba</p></div>
+          <div class="acceso-martillo" aria-hidden="true">${MARTILLO(380, "#c8ad7a", "rgba(228,236,230,.18)")}</div>
+        </aside>
+        <section class="acceso-panel">
+          <div class="acceso-caja">
+            <h1>${ui.loginTab === "ingresar" ? "Ingresa a tu cuenta" : "Crea tu cuenta"}</h1>
+            <div class="pestanas" role="tablist">
+              <button role="tab" aria-selected="${ui.loginTab === "ingresar"}" data-accion="login-tab" data-id="ingresar">Ingresar</button>
+              <button role="tab" aria-selected="${ui.loginTab === "crear"}" data-accion="login-tab" data-id="crear">Crear cuenta</button>
+            </div>
+            ${formulario}
+            <div class="demo">
+              <span class="texto-chico">Cuentas de prueba</span>
+              ${demo.map(([id, txt]) => { const u = usuario(id); return `<button class="demo-cuenta" data-accion="demo" data-id="${id}">${avatar(u)}<span><strong>${esc(u.nombre)}</strong><small>${txt}</small></span></button>`; }).join("")}
+            </div>
+          </div>
+        </section>
+      </div>`;
+  }
+
+  function vistaBarra(v) {
+    const u = yo();
+    if (!u) return "";
+    let enlaces;
+    if (u.rol === "administrador") enlaces = [["admin", "Administración"], ["explorar", "Subastas"]];
+    else enlaces = [["explorar", "Subastas"], ["mis-pujas", "Mis pujas"], u.rol === "vendedor" ? ["mi-tienda", "Mi tienda"] : ["vender", "Vender en Remate"]];
+    const actual = v === "sala" || v === "acta" ? "explorar" : v === "consola" ? "mi-tienda" : v;
+    return `
+      <div class="contenedor barra-in">
+        <a class="marca" href="#/${u.rol === "administrador" ? "admin" : "explorar"}" aria-label="Remate, inicio">${LOGO(26)}</a>
+        <nav class="nav" aria-label="Principal">${enlaces.map(([r, t]) => `<a href="#/${r}" ${actual === r ? 'aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
+        <div class="cuenta">
+          ${avatar(u)}
+          <span class="cuenta-txt"><strong>${esc(u.nombre)}</strong><small>${etiquetaRol(u)}${u.paleta ? ` · Paleta ${u.paleta}` : ""}</small></span>
+          <button class="boton fantasma" data-accion="salir">Salir</button>
+        </div>
+      </div>`;
+  }
+
+  function tarjetaSubasta(s) {
+    const t = tienda(s.tiendaId);
+    const abierta = s.estado === "abierta";
+    const etiqueta = s.estado === "cerrada" ? (s.ganadorId ? "Adjudicado en" : "Sin pujas") : s.precio == null ? "Precio inicial" : "Oferta más alta";
+    const derecha = abierta ? `<span class="texto-chico">Cierra en</span><strong data-reloj="${s.codigo}"></strong>`
+      : s.estado === "cerrada" ? `<span class="texto-chico">Cerró</span><strong>${fecha(s.cerradaEn)}</strong>`
+      : `<span class="texto-chico">Duración</span><strong>${reloj(s.duracion * 1000)}</strong>`;
+    return `
+      <a class="tarjeta sub" href="#/sala/${s.codigo}">
+        <div class="ilus">${ilus(s.ilus)}${abierta ? chip("abierta") : ""}</div>
+        <div class="sub-cuerpo">
+          <div class="fila entre"><span class="texto-chico">${esc(t.nombre)} · @${esc(t.tiktok)}</span><span class="codigo-mini">${s.codigo}</span></div>
+          <h3>${esc(s.producto)}</h3>
+          ${abierta && s.liderId === sesion ? `<span class="ganando">Vas ganando</span>` : ""}
+          <div class="sub-pie">
+            <div><span class="texto-chico">${etiqueta}</span><strong ${abierta ? `data-precio="${s.codigo}"` : ""}>${bs(s.precio ?? s.precioInicial)}</strong></div>
+            <div class="derecha">${derecha}</div>
+          </div>
+        </div>
+      </a>`;
+  }
+
+  function vistaExplorar() {
+    const visibles = D.subastas.filter((s) => tienda(s.tiendaId).activa && s.estado !== "borrador");
+    const grupo = (lista, vacio) => lista.length ? `<div class="grilla">${lista.map(tarjetaSubasta).join("")}</div>` : `<p class="vacio">${vacio}</p>`;
+    const vivas = visibles.filter((s) => s.estado === "abierta");
+    const prox = visibles.filter((s) => s.estado === "programada");
+    const term = visibles.filter((s) => s.estado === "cerrada").sort((a, b) => b.cerradaEn - a.cerradaEn);
+    return `
+      <div class="contenedor pagina">
+        <div class="encabezado">
+          <div><h1>Subastas</h1><p class="tenue">Entra a una sala con el código que la tienda anuncia en su live.</p></div>
+          <form class="codigo-form" data-form="codigo" novalidate>
+            <label class="sr" for="codigo">Código de sala</label>
+            <input id="codigo" name="codigo" class="entrada" placeholder="RM-0000" autocomplete="off" maxlength="7">
+            <button class="boton">Entrar a la sala</button>
+            <p class="error" aria-live="polite"></p>
+          </form>
+        </div>
+        <h2 class="titulo-seccion">En vivo ahora <span class="conteo">${vivas.length}</span></h2>
+        ${grupo(vivas, "No hay subastas en vivo en este momento.")}
+        <h2 class="titulo-seccion">Próximas <span class="conteo">${prox.length}</span></h2>
+        ${grupo(prox, "No hay subastas programadas.")}
+        <h2 class="titulo-seccion">Terminadas <span class="conteo">${term.length}</span></h2>
+        ${grupo(term, "Todavía no terminó ninguna subasta.")}
+      </div>`;
+  }
+
+  function vacioPagina(titulo, texto, enlace = ["#/explorar", "Volver a subastas"]) {
+    return `<div class="contenedor pagina estrecha"><div class="tarjeta relleno form"><h1>${titulo}</h1><p class="tenue">${texto}</p><a class="boton" href="${enlace[0]}" style="align-self:flex-start">${enlace[1]}</a></div></div>`;
+  }
+
+  function puedeVerActa(s, u) { return s.estado === "cerrada" && (u.rol === "administrador" || esDueno(s, u) || s.ganadorId === u.id); }
+
+  function bloqueMartillo(s, u) {
+    const g = s.ganadorId ? usuario(s.ganadorId) : null;
+    const t = tienda(s.tiendaId);
+    const reciente = s.cerradaEn && ahora() - s.cerradaEn < 2500;
+    let texto;
+    if (!g) texto = "La subasta terminó sin ofertas válidas.";
+    else if (g.id === u.id) texto = `a tu paleta, la ${g.paleta}. Coordina el pago y la entrega con ${esc(t.nombre)}.`;
+    else if (esDueno(s, u)) texto = `a la paleta ${g.paleta}, ${esc(g.nombre)}. Coordina el pago y la entrega fuera de Remate.`;
+    else texto = `a la paleta ${g.paleta}, ${esc(corto(g))}.`;
+    return `
+      <div class="martillo ${reciente ? "anim" : ""}" aria-live="polite">
+        <div class="franja" aria-hidden="true"></div>
+        ${MARTILLO(64)}
+        <h3>${g ? "Adjudicado" : "Sin pujas"}</h3>
+        ${g ? `<div class="monto-final">${bs(s.precio)}</div>` : ""}
+        <p>${texto}</p>
+        <div class="martillo-acciones">
+          ${puedeVerActa(s, u) ? `<a class="boton arena" href="#/acta/${s.codigo}">Ver acta</a>` : ""}
+          ${s.demo ? `<button class="boton claro" data-accion="repetir" data-id="${s.codigo}">Repetir subasta</button>` : ""}
+        </div>
+        <div class="franja abajo" aria-hidden="true"></div>
+      </div>`;
+  }
+
+  function tarjetaSala(s, u) {
+    const abierta = s.estado === "abierta";
+    const pujas = pujasDe(s);
+    const lider = s.liderId ? usuario(s.liderId) : null;
+    const liderTxt = !lider ? "Todavía sin pujas"
+      : lider.id === u.id ? `<b>Tú vas ganando</b>, paleta ${lider.paleta}`
+      : `Va ganando la <b>paleta ${lider.paleta}</b>, ${esc(corto(lider))}`;
+    const filas = pujas.slice(0, 5).map((p, i) => {
+      const quien = usuario(p.usuarioId);
+      const clases = [p.usuarioId === u.id ? "mia" : "", i === 0 ? "lider-fila" : "", i === 0 && ahora() - p.t < 500 ? "nueva" : ""].join(" ");
+      return `<div class="puja-fila ${clases}"><span class="paleta">${quien.paleta}</span><span class="quien">${p.usuarioId === u.id ? "Tú" : esc(corto(quien))}<small>Puja n.º ${p.orden} · ${hora(p.t)}</small></span><span class="monto">${bs(p.monto)}</span></div>`;
+    }).join("");
+
+    let controles;
+    if (esDueno(s, u)) {
+      controles = `<p class="aviso">Esta es tu subasta: no puedes pujar en ella.</p><a class="boton bloque" href="#/consola/${s.codigo}">Ir a la consola de la sala</a>`;
+    } else if (u.rol === "administrador") {
+      controles = `<p class="aviso">Las cuentas de administración no pujan.</p>`;
+    } else {
+      let estado = s.mia, clase = estado?.fase ?? "";
+      let texto = estado?.texto ?? (abierta ? `Eres la paleta ${u.paleta}. Puja cuando quieras.` : s.estado === "programada" ? "La sala todavía no abre. La tienda la abrirá durante su live." : `Eres la paleta ${u.paleta}.`);
+      if (estado?.fase === "aceptada" && abierta && s.liderId !== u.id) { texto = `Te superaron. La oferta más alta ahora es ${bs(s.precio)}.`; clase = "rechazada"; }
+      const enviando = estado?.fase === "enviando";
+      const m = minimo(s);
+      controles = `
+        <div class="mi-estado ${clase}" role="status">${texto}</div>
+        <div class="ofertar">
+          <button class="boton" data-accion="pujar" data-id="${s.codigo}" data-pasos="1" ${!abierta || enviando ? "disabled" : ""}>${abierta ? `Ofertar ${bs(m)}` : s.estado === "programada" ? "Aún no abre" : "Subasta cerrada"}</button>
+          <button class="boton secundario" data-accion="pujar" data-id="${s.codigo}" data-pasos="2" ${!abierta || enviando ? "disabled" : ""}>${bs(m + s.incremento)}</button>
+        </div>
+        <div class="tu-paleta">Tu paleta: ${u.paleta}</div>`;
+    }
+
+    return `
+      <section class="tarjeta sala" aria-label="Sala ${s.codigo}">
+        <div class="sala-sup"><span>Sala <strong>${s.codigo}</strong></span><span class="conexion ${abierta ? "" : "off"}">${abierta ? "En directo" : s.estado === "cerrada" ? "Cerrada" : "Sin abrir"}</span></div>
+        <div class="tablero" data-urgente="${s.codigo}">
+          <span class="ampliacion" data-ampliacion="${s.codigo}">+${AMPLIACION / 1000} s</span>
+          <div class="etiqueta">${s.precio == null ? "Precio inicial" : "Oferta más alta"}</div>
+          <div class="precio ${ahora() - s.saltoEn < 450 ? "salto" : ""}"><small>Bs</small>${num(s.precio ?? s.precioInicial)}</div>
+          <div class="lider">${liderTxt}</div>
+          <div class="tiempo"><span>${abierta ? "Cierra en" : s.estado === "programada" ? "Duración" : "Estado"}</span><strong data-reloj="${s.codigo}"></strong></div>
+          <div class="barra-tiempo"><i data-barra="${s.codigo}"></i></div>
+        </div>
+        <div class="historial">
+          <div class="historial-titulo"><span>Pujas aceptadas</span><span>${pujas.length} en total</span></div>
+          ${filas || `<p class="vacio-mini">Todavía no hay pujas.</p>`}
+        </div>
+        ${controles}
+        ${s.estado === "cerrada" ? bloqueMartillo(s, u) : ""}
+      </section>`;
+  }
+
+  function vistaSala(codigo) {
+    const s = subPorCodigo(codigo);
+    const u = yo();
+    if (!s || (s.estado === "borrador" && !esDueno(s, u))) return vacioPagina("No encontramos esa sala", `Revisa el código ${esc(codigo)} con la tienda.`);
+    const t = tienda(s.tiendaId);
+    if (!t.activa && u.rol !== "administrador" && !esDueno(s, u)) return vacioPagina("Esta sala no está disponible", "La tienda está suspendida por administración.");
+    return `
+      <div class="contenedor pagina">
+        <a class="volver" href="#/${u.rol === "administrador" ? "admin/subastas" : "explorar"}">← Subastas</a>
+        <div class="sala-layout">
+          <div class="sala-info">
+            <div class="ilus">${ilus(s.ilus)}</div>
+            <div class="fila envolver">${chip(s.estado, true)}<span class="codigo-mini">Sala ${s.codigo}</span></div>
+            <div><h1>${esc(s.producto)}</h1><p class="tenue" style="margin-top:6px">${esc(t.nombre)} · @${esc(t.tiktok)} · ${esc(t.ciudad)}</p></div>
+            <dl class="datos">
+              <div><dt>Precio inicial</dt><dd>${bs(s.precioInicial)}</dd></div>
+              <div><dt>Incremento mínimo</dt><dd>${bs(s.incremento)}</dd></div>
+              <div><dt>Duración</dt><dd>${duracionTxt(s.duracion)}</dd></div>
+              <div><dt>Categoría</dt><dd>${esc(s.categoria)}</dd></div>
+            </dl>
+            <p class="texto-chico">Solo cuentan las pujas aceptadas en esta sala, no los comentarios del live. Si alguien puja en los últimos ${VENTANA / 1000} segundos, el cierre se amplía ${AMPLIACION / 1000} segundos.</p>
+          </div>
+          ${tarjetaSala(s, u)}
+        </div>
+      </div>`;
+  }
+
+  function vistaMisPujas() {
+    const u = yo();
+    const ids = [...new Set(D.pujas.filter((p) => p.usuarioId === u.id).map((p) => p.subastaId))];
+    const lista = ids.map((id) => D.subastas.find((s) => s.id === id)).sort((a, b) => (a.estado === "abierta" ? -1 : 0) - (b.estado === "abierta" ? -1 : 0));
+    if (!lista.length) return vacioPagina("Mis pujas", "Todavía no pujaste en ninguna sala.", ["#/explorar", "Ver subastas"]);
+    const filas = lista.map((s) => {
+      const mejor = Math.max(...D.pujas.filter((p) => p.subastaId === s.id && p.usuarioId === u.id).map((p) => p.monto));
+      let est;
+      if (s.estado === "abierta") est = s.liderId === u.id ? `<span class="chip ok">Vas ganando</span>` : `<span class="chip mal">Te superaron</span>`;
+      else est = s.ganadorId === u.id ? `<span class="chip ok">Ganada</span>` : `<span class="chip">No ganada</span>`;
+      const accion = s.estado === "cerrada" && s.ganadorId === u.id ? `<a class="boton secundario chico" href="#/acta/${s.codigo}">Ver acta</a>` : `<a class="boton secundario chico" href="#/sala/${s.codigo}">Ver sala</a>`;
+      return `<tr><td><strong>${esc(s.producto)}</strong><br><span class="texto-chico">${esc(tienda(s.tiendaId).nombre)} · ${s.codigo}</span></td><td>${bs(mejor)}</td><td ${s.estado === "abierta" ? `data-precio="${s.codigo}"` : ""}>${bs(s.precio ?? s.precioInicial)}</td><td>${est}</td><td class="accion">${accion}</td></tr>`;
+    }).join("");
+    const ganadas = lista.filter((s) => s.estado === "cerrada" && s.ganadorId === u.id);
+    return `
+      <div class="contenedor pagina">
+        <div class="encabezado"><div><h1>Mis pujas</h1><p class="tenue">Las salas donde participaste con tu paleta ${u.paleta}.</p></div></div>
+        <div class="metricas">
+          <div><span>Salas en las que pujaste</span><strong>${lista.length}</strong></div>
+          <div><span>Ganadas</span><strong>${ganadas.length}</strong></div>
+          <div><span>Total adjudicado</span><strong>${bs(ganadas.reduce((a, s) => a + s.precio, 0))}</strong></div>
+        </div>
+        <div class="tarjeta tabla-env"><table>
+          <thead><tr><th>Lote</th><th>Tu mejor puja</th><th>Oferta más alta</th><th>Estado</th><th></th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table></div>
+        <p class="texto-chico">Ganar una subasta no confirma un pago. El pago y la entrega se coordinan con la tienda.</p>
+      </div>`;
+  }
+
+  function vistaVender() {
+    const u = yo();
+    const r = ui.registro;
+    if (r.listo) {
+      const t = tiendaDe(u.id);
+      return `
+        <div class="contenedor pagina estrecha">
+          <div class="tarjeta form exito">
+            <div class="sello"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <h1>${esc(t.nombre)} ya está en Remate</h1>
+            <p class="tenue">Tu cuenta ahora compra y vende. Sigues pujando con tu paleta ${u.paleta} en las salas de otras tiendas.</p>
+            <div class="fila envolver" style="justify-content:center">
+              <button class="boton" data-accion="primer-lote">Crear mi primer lote</button>
+              <a class="boton secundario" href="#/explorar">Seguir explorando</a>
+            </div>
+          </div>
+        </div>`;
+    }
+    const pasos = ["Tu tienda", "Ubicación", "Confirmar"];
+    const d = r.datos;
+    let cuerpo;
+    if (r.paso === 1) cuerpo = `
+      <form class="tarjeta relleno form" data-form="reg-1" novalidate>
+        <div class="campo"><label for="r-nombre">Nombre de la tienda</label><input id="r-nombre" name="nombre" class="entrada" maxlength="40" autocomplete="off" value="${esc(d.nombre)}"></div>
+        <div class="campo"><label for="r-tiktok">Usuario de TikTok</label><div class="prefijo"><span>@</span><input id="r-tiktok" name="tiktok" class="entrada" maxlength="24" autocomplete="off" value="${esc(d.tiktok)}"></div><span class="ayuda">La cuenta desde la que haces tus lives.</span></div>
+        <p class="error" aria-live="polite"></p>
+        <div class="acciones-dlg"><button class="boton">Continuar</button></div>
+      </form>`;
+    else if (r.paso === 2) cuerpo = `
+      <form class="tarjeta relleno form" data-form="reg-2" novalidate>
+        <div class="campo"><label for="r-ciudad">Ciudad</label><select id="r-ciudad" name="ciudad" class="entrada">${["Cochabamba", "Quillacollo", "Sacaba", "Tiquipaya", "Colcapirhua", "Vinto"].map((c) => `<option ${d.ciudad === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+        <div class="campo"><label for="r-cat">Qué vendes principalmente</label><select id="r-cat" name="categoria" class="entrada">${["Hogar", "Tecnología", "Moda", "Coleccionables"].map((c) => `<option ${d.categoria === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+        <div class="acciones-dlg"><button type="button" class="boton secundario" data-accion="reg-atras">Atrás</button><button class="boton">Continuar</button></div>
+      </form>`;
+    else cuerpo = `
+      <form class="tarjeta relleno form" data-form="reg-3" novalidate>
+        <dl class="resumen">
+          <dt>Tienda</dt><dd>${esc(d.nombre)}</dd>
+          <dt>TikTok</dt><dd>@${esc(d.tiktok)}</dd>
+          <dt>Ciudad</dt><dd>${esc(d.ciudad)}</dd>
+          <dt>Categoría</dt><dd>${esc(d.categoria)}</dd>
+        </dl>
+        <p class="tenue">Al registrar la tienda tu cuenta pasa a ser de vendedor: podrás crear lotes y abrir salas durante tu live. No pierdes nada: sigues pujando en las salas de otras tiendas, pero no en las tuyas.</p>
+        <label class="casilla"><input type="checkbox" name="confirmo"><span>Confirmo que administro la cuenta @${esc(d.tiktok)}.</span></label>
+        <p class="error" aria-live="polite"></p>
+        <div class="acciones-dlg"><button type="button" class="boton secundario" data-accion="reg-atras">Atrás</button><button class="boton">Registrar tienda</button></div>
+      </form>`;
+    return `
+      <div class="contenedor pagina estrecha">
+        <div><h1>Vende en Remate</h1><p class="tenue" style="margin-top:6px">Registra tu tienda de TikTok para subastar en tus lives.</p></div>
+        <ol class="pasos-reg">${pasos.map((p, i) => `<li class="${i + 1 < r.paso ? "hecho" : i + 1 === r.paso ? "actual" : ""}">${i + 1}. ${p}</li>`).join("")}</ol>
+        ${cuerpo}
+      </div>`;
+  }
+
+  function accionLote(s, t) {
+    if (s.estado === "borrador") return `<button class="boton secundario chico" data-accion="lista" data-id="${s.codigo}">Marcar como lista</button>`;
+    if (s.estado === "programada") return `<button class="boton chico" data-accion="abrir" data-id="${s.codigo}" ${t.activa ? "" : "disabled"}>Abrir sala</button>`;
+    if (s.estado === "abierta") return `<a class="boton chico" href="#/consola/${s.codigo}">Ver consola</a>`;
+    return `<a class="boton secundario chico" href="#/acta/${s.codigo}">Ver acta</a>`;
+  }
+
+  function vistaMiTienda() {
+    const u = yo();
+    const t = tiendaDe(u.id);
+    const lotes = D.subastas.filter((s) => s.tiendaId === t.id);
+    const orden = { abierta: 0, programada: 1, borrador: 2, cerrada: 3 };
+    lotes.sort((a, b) => orden[a.estado] - orden[b.estado]);
+    const adjudicadas = lotes.filter((s) => s.estado === "cerrada" && s.ganadorId);
+    const filas = lotes.map((s) => `
+      <tr>
+        <td><strong>${esc(s.producto)}</strong><br><span class="texto-chico">${esc(s.categoria)}</span></td>
+        <td class="codigo-mini">${s.codigo}</td>
+        <td>${bs(s.precioInicial)}</td>
+        <td>${bs(s.incremento)}</td>
+        <td>${duracionTxt(s.duracion)}</td>
+        <td>${chip(s.estado)}</td>
+        <td ${s.estado === "abierta" ? `data-precio="${s.codigo}"` : ""}>${s.precio != null ? bs(s.precio) : "—"}</td>
+        <td class="accion">${accionLote(s, t)}</td>
+      </tr>`).join("");
+    return `
+      <div class="contenedor pagina">
+        <div class="encabezado">
+          <div><span class="texto-chico">Mi tienda</span><h1>${esc(t.nombre)}</h1><p class="tenue">@${esc(t.tiktok)} · ${esc(t.ciudad)} · ${esc(t.categoria)}</p></div>
+          <button class="boton" data-accion="nuevo-lote" ${t.activa ? "" : "disabled"}>Nuevo lote</button>
+        </div>
+        ${t.activa ? "" : `<p class="aviso alerta">Tu tienda está suspendida por administración. No puedes crear lotes ni abrir salas hasta que la reactiven.</p>`}
+        <div class="metricas">
+          <div><span>En vivo</span><strong>${lotes.filter((s) => s.estado === "abierta").length}</strong></div>
+          <div><span>Listos para abrir</span><strong>${lotes.filter((s) => s.estado === "programada").length}</strong></div>
+          <div><span>Adjudicados</span><strong>${adjudicadas.length}</strong></div>
+          <div><span>Total adjudicado</span><strong>${bs(adjudicadas.reduce((a, s) => a + s.precio, 0))}</strong></div>
+        </div>
+        <h2 class="titulo-seccion">Lotes <span class="conteo">${lotes.length}</span></h2>
+        ${lotes.length ? `<div class="tarjeta tabla-env"><table>
+          <thead><tr><th>Lote</th><th>Código</th><th>Precio inicial</th><th>Incremento</th><th>Duración</th><th>Estado</th><th>Oferta más alta</th><th></th></tr></thead>
+          <tbody>${filas}</tbody></table></div>` : `<p class="vacio">Todavía no tienes lotes. Crea el primero y ábrelo cuando lo muestres en tu live.</p>`}
+      </div>`;
+  }
+
+  function vistaConsola(codigo) {
+    const u = yo();
+    const s = subPorCodigo(codigo);
+    if (!s || !esDueno(s, u)) return vacioPagina("No puedes ver esta consola", "Solo la tienda dueña del lote puede manejar su sala.", ["#/mi-tienda", "Ir a mi tienda"]);
+    const t = tienda(s.tiendaId);
+    const lider = s.liderId ? usuario(s.liderId) : null;
+    const sols = solicitudesDe(s);
+    let control = "";
+    if (s.estado === "borrador") control = `<div class="fila envolver"><button class="boton" data-accion="lista" data-id="${s.codigo}">Marcar como lista para abrir</button></div>`;
+    else if (s.estado === "programada") control = `<div class="fila envolver"><button class="boton" data-accion="abrir" data-id="${s.codigo}" ${t.activa ? "" : "disabled"}>Abrir subasta</button><span class="texto-chico">Al abrirla empieza el tiempo de ${duracionTxt(s.duracion)}. Anuncia el código en tu live antes de abrir.</span></div>`;
+    else if (s.estado === "abierta") control = `<p class="aviso">El cierre es automático. Solo cuentan las pujas aceptadas en la sala, no los comentarios del live.</p>`;
+    else {
+      const g = s.ganadorId ? usuario(s.ganadorId) : null;
+      control = `<div class="resultado">
+        <div class="fila">${MARTILLO(44)}<div><p>${g ? "Adjudicado" : "Terminó sin ofertas válidas"}</p>${g ? `<div class="monto-final">${bs(s.precio)}</div>` : ""}</div></div>
+        ${g ? `<p>Paleta ${g.paleta}, ${esc(g.nombre)}. Coordina el pago y la entrega fuera de Remate.</p>` : ""}
+        <div class="fila envolver"><a class="boton arena" href="#/acta/${s.codigo}">Ver acta</a>${s.demo ? `<button class="boton claro" data-accion="repetir" data-id="${s.codigo}">Repetir subasta</button>` : ""}</div>
+      </div>`;
+    }
+    return `
+      <div class="contenedor pagina">
+        <a class="volver" href="#/mi-tienda">← Mi tienda</a>
+        <div class="consola-cab">
+          <div class="consola-lote">
+            <div class="ilus">${ilus(s.ilus)}</div>
+            <div><div class="fila envolver">${chip(s.estado)}<span class="codigo-mini">Consola de la sala</span></div><h1 style="margin-top:6px">${esc(s.producto)}</h1><p class="tenue">Precio inicial ${bs(s.precioInicial)} · incremento ${bs(s.incremento)} · ${duracionTxt(s.duracion)}</p></div>
+          </div>
+          <div class="tarjeta codigo-caja">
+            <span class="texto-chico">Código de la sala para tu live</span>
+            <div class="codigo-grande">${s.codigo}</div>
+            <div class="fila"><button class="boton secundario chico" data-accion="copiar" data-id="${s.codigo}">Copiar código</button><button class="boton secundario chico" data-accion="copiar-enlace" data-id="${s.codigo}">Copiar enlace</button></div>
+          </div>
+        </div>
+        <div class="metricas">
+          <div><span>${s.precio == null ? "Precio inicial" : "Oferta más alta"}</span><strong ${s.estado === "abierta" ? `data-precio="${s.codigo}"` : ""}>${bs(s.precio ?? s.precioInicial)}</strong></div>
+          <div><span>Va ganando</span><strong>${lider ? `Paleta ${lider.paleta}, ${esc(corto(lider))}` : "—"}</strong></div>
+          <div><span>Pujas aceptadas</span><strong>${pujasDe(s).length}</strong></div>
+          <div><span>Rechazadas</span><strong>${sols.filter((q) => q.resultado === "rechazada").length}</strong></div>
+          <div><span>${s.estado === "abierta" ? "Cierra en" : s.estado === "cerrada" ? "Estado" : "Duración"}</span><strong data-reloj="${s.codigo}"></strong></div>
+        </div>
+        ${control}
+        <h2 class="titulo-seccion">Solicitudes de puja <span class="conteo">${sols.length}</span></h2>
+        ${tablaSolicitudes(sols)}
+      </div>`;
+  }
+
+  function tablaSolicitudes(sols) {
+    if (!sols.length) return `<p class="vacio">Todavía no llegó ninguna solicitud.</p>`;
+    return `<div class="tarjeta tabla-env"><table>
+      <thead><tr><th>Orden</th><th>Paleta</th><th>Postor</th><th>Monto</th><th>Hora del servidor</th><th>Resultado</th></tr></thead>
+      <tbody>${sols.map((q) => { const p = usuario(q.usuarioId); return `<tr><td>${q.orden ?? "—"}</td><td>${p.paleta}</td><td>${esc(p.nombre)}</td><td>${bs(q.monto)}</td><td>${hora(q.t)}</td><td>${q.resultado === "aceptada" ? `<span class="chip ok">Aceptada</span>` : `<span class="chip mal" title="${esc(q.motivo)}">Rechazada</span>`}</td></tr>`; }).join("")}</tbody>
+    </table></div>`;
+  }
+
+  function vistaActa(codigo) {
+    const u = yo();
+    const s = subPorCodigo(codigo);
+    if (!s || !puedeVerActa(s, u)) return vacioPagina("No puedes ver esta acta", "El acta la ven la tienda, quien ganó y el equipo de administración.");
+    const t = tienda(s.tiendaId);
+    const g = s.ganadorId ? usuario(s.ganadorId) : null;
+    const sols = solicitudesDe(s);
+    const volver = u.rol === "administrador" ? ["#/admin/subastas", "← Subastas"] : esDueno(s, u) ? ["#/mi-tienda", "← Mi tienda"] : ["#/mis-pujas", "← Mis pujas"];
+    return `
+      <div class="contenedor pagina">
+        <a class="volver" href="${volver[0]}">${volver[1]}</a>
+        <div class="acta-layout">
+          <article class="tarjeta acta">
+            <span class="texto-chico">Acta de adjudicación</span>
+            <h1 style="font-size:24px;margin-top:4px">${esc(s.producto)}</h1>
+            <p class="tenue">${esc(t.nombre)} · sala ${s.codigo}</p>
+            <dl class="acta-dl">
+              <dt>Ganador</dt><dd>${g ? `Paleta ${g.paleta}, ${esc(g.nombre)}` : "Sin ganador"}</dd>
+              <dt>Monto adjudicado</dt><dd>${g ? bs(s.precio) : "—"}</dd>
+              <dt>Precio inicial</dt><dd>${bs(s.precioInicial)}</dd>
+              <dt>Pujas aceptadas</dt><dd>${pujasDe(s).length}</dd>
+              <dt>Solicitudes rechazadas</dt><dd>${sols.filter((q) => q.resultado === "rechazada").length}</dd>
+              <dt>Ampliaciones de cierre</dt><dd>${s.ampliaciones}</dd>
+              <dt>Apertura</dt><dd>${fecha(s.abiertaEn)}</dd>
+              <dt>Cierre</dt><dd>${fecha(s.cerradaEn)}</dd>
+            </dl>
+            <div class="acta-num"><span>N.º de acta</span><strong>${s.codigo}-${String(s.id).padStart(4, "0")}</strong></div>
+            <p class="texto-chico" style="margin-top:14px">Adjudicar no confirma un pago ni una entrega. Eso se coordina entre comprador y tienda.</p>
+          </article>
+          <div class="form">
+            <h2>Todas las solicitudes</h2>
+            ${tablaSolicitudes(sols)}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function vistaAdmin(tab) {
+    tab = ["resumen", "usuarios", "tiendas", "subastas"].includes(tab) ? tab : "resumen";
+    const pest = [["resumen", "Resumen"], ["usuarios", `Usuarios (${D.usuarios.length})`], ["tiendas", `Tiendas (${D.tiendas.length})`], ["subastas", `Subastas (${D.subastas.length})`]];
+    let cuerpo;
+    if (tab === "resumen") {
+      const vivas = D.subastas.filter((s) => s.estado === "abierta");
+      cuerpo = `
+        <div class="metricas">
+          <div><span>Usuarios activos</span><strong>${D.usuarios.filter((u) => u.activo).length} de ${D.usuarios.length}</strong></div>
+          <div><span>Cuentas que venden</span><strong>${D.usuarios.filter((u) => u.rol === "vendedor").length}</strong></div>
+          <div><span>Tiendas activas</span><strong>${D.tiendas.filter((t) => t.activa).length}</strong></div>
+          <div><span>Salas en vivo</span><strong>${vivas.length}</strong></div>
+          <div><span>Pujas aceptadas</span><strong>${D.pujas.length}</strong></div>
+          <div><span>Solicitudes rechazadas</span><strong>${D.solicitudes.filter((q) => q.resultado === "rechazada").length}</strong></div>
+        </div>
+        <h2 class="titulo-seccion">En vivo ahora <span class="conteo">${vivas.length}</span></h2>
+        ${tablaSubastas(vivas, "No hay salas en vivo.")}
+        <h2 class="titulo-seccion">Altas recientes</h2>
+        ${tablaUsuarios([...D.usuarios].sort((a, b) => b.alta - a.alta).slice(0, 4))}`;
+    } else if (tab === "usuarios") {
+      cuerpo = `<p class="tenue">Cada cuenta empieza como usuario. Pasa a vendedor cuando registra una tienda y conserva la opción de pujar.</p>${tablaUsuarios(D.usuarios)}`;
+    } else if (tab === "tiendas") {
+      cuerpo = `<div class="tarjeta tabla-env"><table>
+        <thead><tr><th>Tienda</th><th>TikTok</th><th>Ciudad</th><th>Dueño</th><th>Lotes</th><th>Estado</th><th></th></tr></thead>
+        <tbody>${D.tiendas.map((t) => `<tr>
+          <td><strong>${esc(t.nombre)}</strong><br><span class="texto-chico">${esc(t.categoria)} · desde ${new Date(t.alta).toLocaleDateString("es-BO", { day: "numeric", month: "short", year: "numeric" })}</span></td>
+          <td>@${esc(t.tiktok)}</td><td>${esc(t.ciudad)}</td><td>${esc(usuario(t.duenoId).nombre)}</td>
+          <td>${D.subastas.filter((s) => s.tiendaId === t.id).length}</td>
+          <td>${t.activa ? `<span class="chip ok">Activa</span>` : `<span class="chip mal">Suspendida</span>`}</td>
+          <td class="accion"><button class="boton ${t.activa ? "peligro" : "secundario"} chico" data-accion="tienda" data-id="${t.id}">${t.activa ? "Suspender" : "Reactivar"}</button></td>
+        </tr>`).join("")}</tbody></table></div>`;
+    } else {
+      cuerpo = tablaSubastas(D.subastas, "No hay subastas.");
+    }
+    return `
+      <div class="contenedor pagina">
+        <div class="encabezado"><div><span class="texto-chico">Administración</span><h1>Panel de Remate</h1></div></div>
+        <nav class="pestanas linea" aria-label="Secciones de administración">${pest.map(([k, t]) => `<a href="#/admin/${k}" ${k === tab ? 'aria-current="page"' : ""}>${t}</a>`).join("")}</nav>
+        ${cuerpo}
+      </div>`;
+  }
+
+  function tablaUsuarios(lista) {
+    const u0 = yo();
+    return `<div class="tarjeta tabla-env"><table>
+      <thead><tr><th>Cuenta</th><th>Rol</th><th>Tienda</th><th>Paleta</th><th>Estado</th><th></th></tr></thead>
+      <tbody>${lista.map((u) => `<tr>
+        <td><div class="persona">${avatar(u)}<span><strong>${esc(u.nombre)}</strong><small>${esc(u.correo)}</small></span></div></td>
+        <td>${chipRol(u)}</td>
+        <td>${esc(tiendaDe(u.id)?.nombre ?? "—")}</td>
+        <td>${u.paleta ?? "—"}</td>
+        <td>${u.activo ? `<span class="chip ok">Activa</span>` : `<span class="chip mal">Suspendida</span>`}</td>
+        <td class="accion">${u.rol === "administrador" || u.id === u0.id ? "" : `<button class="boton ${u.activo ? "peligro" : "secundario"} chico" data-accion="usuario" data-id="${u.id}">${u.activo ? "Suspender" : "Reactivar"}</button>`}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  function tablaSubastas(lista, vacio) {
+    if (!lista.length) return `<p class="vacio">${vacio}</p>`;
+    return `<div class="tarjeta tabla-env"><table>
+      <thead><tr><th>Código</th><th>Lote</th><th>Tienda</th><th>Estado</th><th>Oferta más alta</th><th>Pujas</th><th></th></tr></thead>
+      <tbody>${lista.map((s) => `<tr>
+        <td class="codigo-mini">${s.codigo}</td>
+        <td><strong>${esc(s.producto)}</strong></td>
+        <td>${esc(tienda(s.tiendaId).nombre)}</td>
+        <td>${chip(s.estado)}</td>
+        <td ${s.estado === "abierta" ? `data-precio="${s.codigo}"` : ""}>${s.precio != null ? bs(s.precio) : "—"}</td>
+        <td>${pujasDe(s).length}</td>
+        <td class="accion">${s.estado === "cerrada" ? `<a class="boton secundario chico" href="#/acta/${s.codigo}">Ver acta</a>` : s.estado === "borrador" ? "" : `<a class="boton secundario chico" href="#/sala/${s.codigo}">Ver sala</a>`}</td>
+      </tr>`).join("")}</tbody></table></div>`;
+  }
+
+  // ---------- Enrutador ----------
+  function ruta() {
+    const [v = "", p = ""] = location.hash.replace(/^#\/?/, "").split("/");
+    return { v, p: decodeURIComponent(p) };
+  }
+  function ir(r) { if (location.hash === "#" + r) render(true); else location.hash = r; }
+  const inicio = (u) => (u.rol === "administrador" ? "#/admin" : "#/explorar");
+
+  function render(porNavegacion) {
+    const { v, p } = ruta();
+    const u = yo();
+    if (!u && v !== "ingresar") return location.replace("#/ingresar");
+    if (u && (v === "ingresar" || v === "")) return location.replace(inicio(u));
+    if (u) {
+      if (v === "admin" && u.rol !== "administrador") return location.replace(inicio(u));
+      if ((v === "mi-tienda" || v === "consola") && u.rol !== "vendedor") return location.replace(inicio(u));
+      if (v === "vender" && u.rol !== "usuario" && !ui.registro.listo) return location.replace(u.rol === "vendedor" ? "#/mi-tienda" : inicio(u));
+      if (v === "mis-pujas" && u.rol === "administrador") return location.replace(inicio(u));
+    }
+    const vistas = {
+      ingresar: vistaIngresar, explorar: vistaExplorar, sala: () => vistaSala(p), "mis-pujas": vistaMisPujas,
+      vender: vistaVender, "mi-tienda": vistaMiTienda, consola: () => vistaConsola(p), acta: () => vistaActa(p), admin: () => vistaAdmin(p),
+    };
+    const html = (vistas[v] || (() => vacioPagina("Página no encontrada", "Esa dirección no existe en Remate.", [inicio(u), "Ir al inicio"])))();
+
+    const activo = document.activeElement;
+    const clave = activo?.dataset?.accion ? [activo.dataset.accion, activo.dataset.id ?? "", activo.dataset.pasos ?? ""] : null;
+    barra.innerHTML = vistaBarra(v);
+    vista.innerHTML = html;
+    actualizarVivos();
+    if (porNavegacion) {
+      window.scrollTo(0, 0);
+      document.title = "Remate, otra mirada";
+    } else if (clave) {
+      const sel = `[data-accion="${clave[0]}"]` + (clave[1] ? `[data-id="${CSS.escape(clave[1])}"]` : "") + (clave[2] ? `[data-pasos="${clave[2]}"]` : "");
+      const el = document.querySelector(sel);
+      if (el && !el.disabled) el.focus({ preventScroll: true });
+    }
+    if (ui.abrirDialogo && v === "mi-tienda") { ui.abrirDialogo = false; abrirDialogoLote(); }
+  }
+
+  // Cuando cambia una sala, redibuja solo si la vista actual la muestra y nadie está escribiendo.
+  function avisar(s) {
+    const u = yo();
+    if (!u) return;
+    const { v, p } = ruta();
+    const relevante = (["sala", "consola", "acta"].includes(v) && p === s.codigo) || ["explorar", "admin", "mis-pujas"].includes(v)
+      || (v === "mi-tienda" && tiendaDe(u.id)?.id === s.tiendaId);
+    if (!relevante) return;
+    const f = document.activeElement;
+    if (f && vista.contains(f) && /INPUT|SELECT|TEXTAREA/.test(f.tagName)) { actualizarVivos(); return; }
+    if (document.getElementById("dlg-lote").open) { actualizarVivos(); return; }
+    render(false);
+  }
+
+  function actualizarVivos() {
+    const t = ahora();
+    document.querySelectorAll("[data-reloj]").forEach((el) => {
+      const s = subPorCodigo(el.dataset.reloj); if (!s) return;
+      el.textContent = s.estado === "abierta" ? reloj(s.fin - t) : s.estado === "cerrada" ? "Cerrada" : reloj(s.duracion * 1000);
+    });
+    document.querySelectorAll("[data-barra]").forEach((el) => {
+      const s = subPorCodigo(el.dataset.barra); if (!s) return;
+      el.style.width = (s.estado === "abierta" ? Math.min(100, ((s.fin - t) / (s.duracion * 1000)) * 100) : s.estado === "cerrada" ? 0 : 100) + "%";
+    });
+    document.querySelectorAll("[data-urgente]").forEach((el) => {
+      const s = subPorCodigo(el.dataset.urgente);
+      el.classList.toggle("urgente", !!s && s.estado === "abierta" && s.fin - t <= VENTANA);
+    });
+    document.querySelectorAll("[data-ampliacion]").forEach((el) => {
+      const s = subPorCodigo(el.dataset.ampliacion);
+      el.classList.toggle("ver", !!s && t - s.ampliadaEn < 1400);
+    });
+    document.querySelectorAll("[data-precio]").forEach((el) => {
+      const s = subPorCodigo(el.dataset.precio); if (s) el.textContent = bs(s.precio ?? s.precioInicial);
+    });
+  }
+
+  // ---------- Acciones ----------
+  let toastT;
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg; el.classList.add("ver");
+    clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("ver"), 2400);
+  }
+  function errorForm(f, msg, campo) {
+    f.querySelector(".error").textContent = msg;
+    if (campo && f[campo]) f[campo].focus();
+  }
+  async function copiar(texto, msg) {
+    try { await navigator.clipboard.writeText(texto); toast(msg); }
+    catch { toast(`No se pudo copiar. El código es ${texto}.`); }
+  }
+
+  function iniciarSesion(u) {
+    sesion = u.id;
+    ui.registro = { paso: 1, datos: {}, listo: false };
+    if (!demoIniciado) { demoIniciado = true; abrir(subPorCodigo("RM-4821")); }
+    ir(inicio(u).slice(1));
+  }
+
+  function abrirDialogoLote() {
+    const d = document.getElementById("dlg-lote");
+    d.querySelector("form").reset();
+    d.querySelector(".error").textContent = "";
+    const t = tiendaDe(yo().id);
+    if (t) d.querySelector("#l-cat").value = t.categoria;
+    d.showModal();
+    d.querySelector("#l-prod").focus();
+  }
+
+  const acciones = {
+    "login-tab": (id) => { ui.loginTab = id; render(false); document.querySelector(`[data-accion="login-tab"][data-id="${id}"]`)?.focus(); },
+    demo: (id) => { const u = usuario(+id); if (!u.activo) return toast("Esa cuenta está suspendida."); iniciarSesion(u); },
+    salir: () => { sesion = null; ui.loginTab = "ingresar"; ir("/ingresar"); },
+    pujar: (codigo, b) => {
+      const s = subPorCodigo(codigo), u = yo();
+      if (!s || s.estado !== "abierta" || s.mia?.fase === "enviando") return;
+      const monto = minimo(s) + (+b.dataset.pasos - 1) * s.incremento;
+      s.mia = { fase: "enviando", texto: `Enviando tu puja de ${bs(monto)}. Esperando confirmación de la sala.` };
+      render(false);
+      procesar(s, u.id, monto, 350 + Math.random() * 500, (res, motivo) => {
+        s.mia = res === "aceptada" ? { fase: "aceptada", texto: `Puja aceptada: ${bs(monto)}. Vas primero.` } : { fase: "rechazada", texto: `Puja rechazada: ${bs(monto)}. ${motivo}` };
+      });
+    },
+    repetir: (codigo) => { reiniciar(subPorCodigo(codigo)); render(false); },
+    lista: (codigo) => { const s = subPorCodigo(codigo); s.estado = "programada"; toast(`${s.producto} quedó lista para abrir.`); render(false); },
+    abrir: (codigo) => {
+      const s = subPorCodigo(codigo);
+      if (!tienda(s.tiendaId).activa) return;
+      abrir(s);
+      const { v } = ruta();
+      if (v !== "consola") ir(`/consola/${codigo}`); else render(false);
+    },
+    copiar: (codigo) => copiar(codigo, "Código copiado."),
+    "copiar-enlace": (codigo) => copiar(`${location.href.split("#")[0]}#/sala/${codigo}`, "Enlace copiado."),
+    "nuevo-lote": abrirDialogoLote,
+    "cerrar-dlg": () => document.getElementById("dlg-lote").close(),
+    "primer-lote": () => { ui.registro.listo = false; ui.abrirDialogo = true; ir("/mi-tienda"); },
+    "reg-atras": () => { ui.registro.paso -= 1; render(false); },
+    usuario: (id) => { const u = usuario(+id); u.activo = !u.activo; toast(`${u.nombre}: cuenta ${u.activo ? "reactivada" : "suspendida"}.`); render(false); },
+    tienda: (id) => { const t = tienda(+id); t.activa = !t.activa; toast(`${t.nombre}: tienda ${t.activa ? "reactivada" : "suspendida"}.`); render(false); },
+  };
+
+  const formularios = {
+    ingresar: (f) => {
+      const correo = f.correo.value.trim().toLowerCase(), clave = f.clave.value;
+      if (!correo || !clave) return errorForm(f, "Escribe tu correo y tu contraseña.", correo ? "clave" : "correo");
+      const u = D.usuarios.find((x) => x.correo === correo);
+      if (!u) return errorForm(f, "No encontramos una cuenta con ese correo.", "correo");
+      if (u.clave !== clave) return errorForm(f, "La contraseña no coincide.", "clave");
+      if (!u.activo) return errorForm(f, "Esta cuenta está suspendida. Escribe al equipo de Remate.");
+      iniciarSesion(u);
+    },
+    crear: (f) => {
+      const nombre = f.nombre.value.trim(), correo = f.correo.value.trim().toLowerCase(), clave = f.clave.value;
+      if (nombre.length < 3) return errorForm(f, "Escribe tu nombre y apellido.", "nombre");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return errorForm(f, "Revisa el correo.", "correo");
+      if (D.usuarios.some((u) => u.correo === correo)) return errorForm(f, "Ya existe una cuenta con ese correo.", "correo");
+      if (clave.length < 8) return errorForm(f, "La contraseña necesita al menos 8 caracteres.", "clave");
+      const usadas = new Set(D.usuarios.map((u) => u.paleta));
+      let paleta; do { paleta = 50 + Math.floor(Math.random() * 50); } while (usadas.has(paleta));
+      const u = { id: Math.max(...D.usuarios.map((x) => x.id)) + 1, nombre, correo, clave, rol: "usuario", paleta, activo: true, alta: ahora() };
+      D.usuarios.push(u);
+      toast(`Cuenta creada. Tu paleta es la ${paleta}.`);
+      iniciarSesion(u);
+    },
+    codigo: (f) => {
+      let c = f.codigo.value.trim().toUpperCase().replace(/\s/g, "");
+      if (/^\d{4}$/.test(c)) c = "RM-" + c;
+      if (/^RM\d{4}$/.test(c)) c = "RM-" + c.slice(2);
+      const s = subPorCodigo(c);
+      if (!s || s.estado === "borrador" || !tienda(s.tiendaId).activa) return errorForm(f, "No hay ninguna sala con ese código.", "codigo");
+      ir(`/sala/${c}`);
+    },
+    "reg-1": (f) => {
+      const nombre = f.nombre.value.trim(), tiktok = f.tiktok.value.trim().replace(/^@/, "");
+      if (nombre.length < 2) return errorForm(f, "Escribe el nombre de tu tienda.", "nombre");
+      if (!/^[A-Za-z0-9._]{2,24}$/.test(tiktok)) return errorForm(f, "El usuario de TikTok solo lleva letras, números, puntos o guiones bajos.", "tiktok");
+      if (D.tiendas.some((t) => t.tiktok.toLowerCase() === tiktok.toLowerCase())) return errorForm(f, "Esa cuenta de TikTok ya tiene una tienda en Remate.", "tiktok");
+      Object.assign(ui.registro.datos, { nombre, tiktok });
+      ui.registro.paso = 2; render(false);
+    },
+    "reg-2": (f) => {
+      Object.assign(ui.registro.datos, { ciudad: f.ciudad.value, categoria: f.categoria.value });
+      ui.registro.paso = 3; render(false);
+    },
+    "reg-3": (f) => {
+      if (!f.confirmo.checked) return errorForm(f, "Confirma que administras la cuenta de TikTok.");
+      const u = yo(), d = ui.registro.datos;
+      D.tiendas.push({ id: Math.max(...D.tiendas.map((t) => t.id)) + 1, nombre: d.nombre, tiktok: d.tiktok, ciudad: d.ciudad, categoria: d.categoria, duenoId: u.id, activa: true, alta: ahora() });
+      u.rol = "vendedor";
+      ui.registro.listo = true;
+      render(true);
+    },
+    lote: (f) => {
+      const producto = f.producto.value.trim();
+      const precio = Number(f.precio.value.replace(",", ".")), inc = Number(f.incremento.value.replace(",", "."));
+      const dec = (x) => /^\d+([.,]\d{1,2})?$/.test(x.trim());
+      if (producto.length < 3) return errorForm(f, "Escribe el nombre del producto.", "producto");
+      if (!dec(f.precio.value) || precio <= 0) return errorForm(f, "El precio inicial debe ser mayor a 0, con hasta dos decimales.", "precio");
+      if (!dec(f.incremento.value) || inc <= 0) return errorForm(f, "El incremento mínimo debe ser mayor a 0, con hasta dos decimales.", "incremento");
+      let codigo; do { codigo = "RM-" + (1000 + Math.floor(Math.random() * 9000)); } while (subPorCodigo(codigo));
+      const t = tiendaDe(yo().id);
+      D.subastas.push(nuevaSubasta({ id: Math.max(...D.subastas.map((s) => s.id)) + 1, codigo, producto, tiendaId: t.id, categoria: f.categoria.value, ilus: ILUS_CATEGORIA[f.categoria.value], precioInicial: precio, incremento: inc, duracion: +f.duracion.value, estado: "borrador" }));
+      document.getElementById("dlg-lote").close();
+      toast(`${producto} guardado como borrador, sala ${codigo}.`);
+      render(false);
+    },
+  };
+
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-accion]");
+    if (!b || b.disabled) return;
+    const f = acciones[b.dataset.accion];
+    if (f) { e.preventDefault(); f(b.dataset.id, b); }
+  });
+  document.addEventListener("submit", (e) => {
+    const f = formularios[e.target.dataset.form];
+    if (!f) return;
+    e.preventDefault();
+    const err = e.target.querySelector(".error"); if (err) err.textContent = "";
+    f(e.target);
+  });
+  window.addEventListener("hashchange", () => render(true));
+
+  render(true);
+  setInterval(tic, 200);
+})();
+</script>
