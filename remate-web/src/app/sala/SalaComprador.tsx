@@ -74,6 +74,9 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
   }, [s.estado]);
   const cerrarCelebracion = useCallback(() => setCelebrar(false), []);
 
+  // La sesión de Supabase se renueva según el reloj del dispositivo: con más de unos minutos de diferencia falla.
+  const relojDesfasado = Math.abs(desfaseMs) > 5 * 60 * 1000;
+
   const abierta = s.estado === "abierta" && (restante == null || restante > 0);
   const puedeOfertar = abierta && conSesion && !esVendedorDeLaSala && !cuentaSuspendida && !tiendaSuspendida
     && conexion === "conectado" && mia?.fase !== "enviando";
@@ -147,7 +150,21 @@ export function SalaComprador({ inicial, conSesion, usuarioId, esVendedorDeLaSal
             <input id="monto" className="entrada cifra" inputMode="decimal" value={monto}
               onChange={(e) => setMonto(e.target.value)} disabled={!puedeOfertar} />
           </div>
+          <div className="atajos-puja" role="group" aria-label="Aumentar tu oferta">
+            {[10, 50, 100].map((x) => (
+              <button key={x} type="button" className="boton boton-secundario" disabled={!puedeOfertar}
+                onClick={() => setMonto((m) => sumarMontos(Number(m) >= Number(minimo) ? m : minimo, x))}>
+                +{x} Bs
+              </button>
+            ))}
+          </div>
         </>
+      )}
+      {relojDesfasado && s.estado === "abierta" && (
+        <p className="aviso aviso-alerta" role="status">
+          La hora de tu dispositivo no coincide con la hora real (diferencia de {Math.round(Math.abs(desfaseMs) / 60000)} min).
+          Corrige la fecha, la hora y la zona horaria de tu dispositivo: con la hora mal, tu sesión caduca y las pujas no se registran.
+        </p>
       )}
 
       {!conSesion && s.estado === "abierta" ? (
@@ -186,5 +203,7 @@ function EstadoMiOferta({ mia, onReintentar }: { mia: MiOferta; onReintentar: ()
 
 function traducirError(e?: string) {
   if (e && /sesion_requerida/.test(e)) return "Ingresa con tu cuenta para ofertar.";
+  if (e && /permission denied|jwt/i.test(e))
+    return "Tu sesión no se pudo validar. Revisa que la fecha, la hora y la zona horaria de tu dispositivo sean correctas, o vuelve a ingresar.";
   return (e && mensajeRechazo[e]) || "La puja no fue aceptada.";
 }

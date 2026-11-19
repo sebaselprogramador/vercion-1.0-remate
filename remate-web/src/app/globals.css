@@ -49,6 +49,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .envolver { flex-wrap: wrap; }
 .grilla-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .grilla-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.atajos-puja { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.atajos-puja .boton { padding-left: 8px; padding-right: 8px; }
 
 /* Barra superior */
 .barra { background: var(--superficie); border-bottom: 1px solid var(--linea); position: sticky; top: 0; z-index: 10; }
